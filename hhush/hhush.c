@@ -78,7 +78,7 @@ void History(int parameterzahl, ...)
 {
 	va_list ArgumentPointer;
 	int n = -1;					//Anzahl der Auszugeben Elemente wird hier gespeichert werden
-	if (parameterzahl)			//Wurden Argumente, müssen sie abgefragt werden, wir 
+	if (parameterzahl)			//Wurden Argumente angegeben, müssen sie abgefragt werden 
 	{
 		va_start(ArgumentPointer, parameterzahl);
 		n = va_arg(ArgumentPointer, int);
@@ -101,7 +101,7 @@ void History(int parameterzahl, ...)
 	{
 		int k;
 		Hilfszeiger = Anfang;
-		for (k = 1; k  < n; k++)		//evtl. hier k=1 oder so setzen nach Testen
+		for (k = 1; k  < n; k++)
 		{
 			Hilfszeiger = Hilfszeiger->Next;
 		}
