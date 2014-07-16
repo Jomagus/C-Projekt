@@ -60,12 +60,12 @@ void NeuesElement(char Input[256])
 }
 
 
-void ListeLöschen()		// Wir müssen nie einzelne Knoten löschen, also reicht eine Funktion, die alle Knoten löscht, und somit ihren Speicherplatz wieder freizugeben
+void ListeLöschen(int n)		// Wir müssen nie einzelne Knoten löschen, also reicht eine Funktion, die alle Knoten löscht, und somit ihren Speicherplatz wieder freizugeben
 {
 	struct Node *Hilfszeiger = Anfang;
 	while (Anfang != NULL)
 	{
-		//Routine zur Dateispeicherung einbauen!
+		//Routine zur Dateispeicherung einbauen!; falls n=0 => nur löschen für "history -c", ansonten history speichern mit n=1
 		Hilfszeiger = Anfang->Next;
 		free(Anfang);
 		Anfang = Hilfszeiger;
@@ -115,17 +115,17 @@ void History(int parameterzahl, ...)
 int main(void)
 {
 
+	{ 
+		char input[256];
+		NeuesElement(fgets(input, sizeof(input), stdin));
+		NeuesElement(fgets(input, sizeof(input), stdin));
+		NeuesElement(fgets(input, sizeof(input), stdin));
+		NeuesElement(fgets(input, sizeof(input), stdin));
+		NeuesElement(fgets(input, sizeof(input), stdin));
+		NeuesElement(fgets(input, sizeof(input), stdin));
+		History(0); 
+	}
 
-	char input[256];
-
-	NeuesElement(fgets(input, sizeof(input), stdin));
-	NeuesElement(fgets(input, sizeof(input), stdin));
-	NeuesElement(fgets(input, sizeof(input), stdin));
-	NeuesElement(fgets(input, sizeof(input), stdin));
-	NeuesElement(fgets(input, sizeof(input), stdin));
-	NeuesElement(fgets(input, sizeof(input), stdin));
-
-	History(0);
 
 	return 0;
 }
