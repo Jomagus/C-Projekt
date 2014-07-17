@@ -60,7 +60,7 @@ void NeuesElement(char Input[256])
 }
 
 
-void ListeLöschen(int n)		// Wir müssen nie einzelne Knoten löschen, also reicht eine Funktion, die alle Knoten löscht, und somit ihren Speicherplatz wieder freizugeben
+void ListeLöschen()		// Wir müssen nie einzelne Knoten löschen, also reicht eine Funktion, die alle Knoten löscht, und somit ihren Speicherplatz wieder freizugeben
 {
 	struct Node *Hilfszeiger = Anfang;
 	while (Anfang != NULL)
@@ -131,6 +131,7 @@ int main(void)
 	}
 
 
-	History(1, 1, 1000);			// Sichert die neusten 1000 Elemente der Histroy in der Datei
+	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der Histroy in der Datei
+	ListeLöschen();					//Um Speicherplatz freizugeben
 	return 0;
 }
