@@ -15,12 +15,12 @@ was aber zu problemen mit gcc führen kann; Der Befehl ignoriert das Funktionen "
 struct Node
 {
 	char Eingabe[256];
+	struct Node *Prev;
 	struct Node *Next;
 };
 
 struct Node *Anfang = NULL;
 
-int ListenFehler = 0;		//Wird auf 1 gesetzt, falls die Speicherplatzreservierung für die verkettete Liste fehlschlägt
 int ListenAnzahl = 0;		//Gibt die Anzahl der gespeicherten Elemente an
 
 void NeuesElement(char Input[256])
@@ -29,7 +29,7 @@ void NeuesElement(char Input[256])
 
 	if (NeuerNode == NULL)	//Falls kein Speicher freigegeben werden konnte
 	{
-		ListenFehler = 1;
+		//Fehlerbehandlung noch machen
 		return;
 	}
 
@@ -41,15 +41,13 @@ void NeuesElement(char Input[256])
 	}
 	else
 	{
+		Anfang->Prev = NeuerNode;
 		NeuerNode->Next = Anfang;
 		Anfang = NeuerNode;
 		ListenAnzahl++;
 
-		/* Wir fügen einen neuen Knoten immer am Anfang der Liste ein, dies bedeutet bei einer einfach Verketteten Liste zwar, dass wir
-		häufig über viele Knoten laufen müssen, vor allem bei dem History befehl, allerdings ergeben sich auch vorteile, durch die sehr einfache Struktur,
-		die es leichter macht, den Überblick zu behalten um z.B. Speicherlecks bei der Programmierung zu vermeiden. Insgesammt ist es also ein Kompromiss:
-		Wir benutzen weniger Speicherplatz (als eine Doppelt verkettete Liste) und haben eine sehr einfache Struktur (durch das Einfügen nur am Anfang und
-		da wir keien dynamischen Arrays verwenden), dafür nehmen wir eine langsamere ausführung einiger Funktionen in kauf. */
+		/* Wir fügen einen neuen Knoten immer am Anfang der Liste ein, dies tun wir, da wir so eine möglichst einfache Struktur haben
+		und desweiteren nie einen Knoten woanders einfügen müssen (da wir diese doppelt verkettete Liste nur für history [n] brauchen) */
 	}
 
 	//strncpy(NeuerNode->Eingabe, Input, 256);
@@ -93,7 +91,7 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 		}
 	}
 
-	struct Node *Hilfszeiger;
+	struct Node *Hilfszeiger = Anfang;
 	int Zähler = 0;										//Ist verantwortlich für die ID in der History
 	FILE *HistoryFile = fopen(".hhush.histfile", "wb");	//Öffnet (und erstellt gegebenenfalls) die History-Datei
 	if (HistoryFile == NULL)
@@ -101,14 +99,14 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 		//Fehlerbehandlung
 	}
 
-	for (; n > 0; n--)
+	int k = 1;
+	for (k = 1; k < n; k++)								//Gehe n Tief in die Liste rein
 	{
-		int k;
-		Hilfszeiger = Anfang;
-		for (k = 1; k  < n; k++)
-		{
-			Hilfszeiger = Hilfszeiger->Next;
-		}
+		Hilfszeiger = Hilfszeiger->Next;
+	}
+
+	for (; n > 0; n--)									//Gehe die Liste rückwärts bis zum Start durch
+	{
 		if (Sichern == 0)
 		{
 			printf("%i %s", Zähler, Hilfszeiger);
@@ -117,9 +115,32 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 		{
 			fputs(Hilfszeiger->Eingabe, HistoryFile);
 		}
-
+		Hilfszeiger = Hilfszeiger->Prev;
 		Zähler++;
 	}
+
+	// Es folgt eine Implementierung für eine einfach verkettete Liste (erst später habe ich die Liste doppelt verkettet, 
+	// falls ein fallback nötig ist, steht dies noch hier)
+	//for (; n > 0; n--)
+	//{
+	//	int k;
+	//	Hilfszeiger = Anfang;
+	//	for (k = 1; k  < n; k++)
+	//	{
+	//		Hilfszeiger = Hilfszeiger->Next;
+	//	}
+	//	if (Sichern == 0)
+	//	{
+	//		printf("%i %s", Zähler, Hilfszeiger);
+	//	}
+	//	else if (Sichern == 1)
+	//	{
+	//		fputs(Hilfszeiger->Eingabe, HistoryFile);
+	//	}
+
+	//	Zähler++;
+	//}
+
 
 	fclose(HistoryFile);
 	return;
@@ -127,20 +148,28 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 
 int main(void)
 {
+	/*******************************************
+	*******Hier wird die history importiert******
+	********************************************/
+
 	FILE *HistoryFile = fopen(".hhush.histfile", "rb");	//Öffnet die History-Datei
 	if (HistoryFile != NULL)	//Falls die History-Datei nicht geöffnet werden konnte (im Regelfall also noch nicht erstellt wurde), wird nichts importiert
 	{
 		char ImportBuffer[256];
-		char *ImportPointer;
+		char *ImportPointer = fgets(ImportBuffer, 256, HistoryFile);
 		do
 		{
-			ImportPointer = fgets(ImportBuffer, 256, HistoryFile);
 			NeuesElement(ImportBuffer);
-		} while (ImportPointer != NULL);
+			ImportPointer = fgets(ImportBuffer, 256, HistoryFile);
+		} while (ImportPointer != NULL);			//Wir lesen die Datei Zeilenweise aus, bis wir am Ende der Datei sind (in der Datei sind maximal 1000 Befehle)
 		fclose(HistoryFile);
 	}
 
+	/*******************************************
+	*******Hier beginnt ******
+	********************************************/
 
+	
 
 	{ 
 		char input[256];
@@ -151,8 +180,11 @@ int main(void)
 		NeuesElement(fgets(input, sizeof(input), stdin));
 		NeuesElement(fgets(input, sizeof(input), stdin));
 		NeuesElement(fgets(input, sizeof(input), stdin));
-		
 	}
+
+
+
+
 
 
 	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
