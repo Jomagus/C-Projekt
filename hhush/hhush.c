@@ -157,11 +157,11 @@ int main(void)
 	{
 		char ImportBuffer[256];
 		char *ImportPointer = fgets(ImportBuffer, 256, HistoryFile);
-		do
+		while (ImportPointer != NULL)			//Wir lesen die Datei Zeilenweise aus, bis wir am Ende der Datei sind (in der Datei sind maximal 1000 Befehle)
 		{
 			NeuesElement(ImportBuffer);
 			ImportPointer = fgets(ImportBuffer, 256, HistoryFile);
-		} while (ImportPointer != NULL);			//Wir lesen die Datei Zeilenweise aus, bis wir am Ende der Datei sind (in der Datei sind maximal 1000 Befehle)
+		}
 		fclose(HistoryFile);
 	}
 
