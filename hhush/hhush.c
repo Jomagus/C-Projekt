@@ -75,6 +75,11 @@ void ListeLöschen()		// Wir müssen nie einzelne Knoten löschen, also reicht eine
 
 void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; History(0,1,n) = history n; Histroy(1,1,1000) Sichert die neusten 1000 Elemente
 {
+	if (Anfang == NULL)	//Sollte nie vorkommen, da zuminedest der Befehl history [n] immer ausgegeben werden müsste; Beim Debugging aber nötig geworden
+	{
+		return;
+	}
+
 	va_list ArgumentPointer;
 	int n = ListenAnzahl;		//Anzahl der Auszugeben Elemente wird hier gespeichert werden
 	if (parameterzahl)			//Wurden Argumente angegeben, müssen sie abgefragt werden 
@@ -90,7 +95,11 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 
 	struct Node *Hilfszeiger;
 	int Zähler = 0;										//Ist verantwortlich für die ID in der History
-	FILE *HistoryFile = fopen(".hhush.histfile", "ab");	//Öffnet (und erstellt gegebenenfalls) die History-Datei
+	FILE *HistoryFile = fopen(".hhush.histfile", "wb");	//Öffnet (und erstellt gegebenenfalls) die History-Datei
+	if (HistoryFile == NULL)
+	{
+		//Fehlerbehandlung
+	}
 
 	for (; n > 0; n--)
 	{
@@ -118,9 +127,24 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 
 int main(void)
 {
+	FILE *HistoryFile = fopen(".hhush.histfile", "rb");	//Öffnet die History-Datei
+	if (HistoryFile != NULL)	//Falls die History-Datei nicht geöffnet werden konnte (im Regelfall also noch nicht erstellt wurde), wird nichts importiert
+	{
+		char ImportBuffer[256];
+		char *ImportPointer;
+		do
+		{
+			ImportPointer = fgets(ImportBuffer, 256, HistoryFile);
+			NeuesElement(ImportBuffer);
+		} while (ImportPointer != NULL);
+		fclose(HistoryFile);
+	}
+
+
 
 	{ 
 		char input[256];
+		History(0, 0);
 		NeuesElement(fgets(input, sizeof(input), stdin));
 		NeuesElement(fgets(input, sizeof(input), stdin));
 		NeuesElement(fgets(input, sizeof(input), stdin));
@@ -131,7 +155,7 @@ int main(void)
 	}
 
 
-	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der Histroy in der Datei
+	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
 	ListeLöschen();					//Um Speicherplatz freizugeben
 	return 0;
 }
