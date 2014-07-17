@@ -73,7 +73,7 @@ void ListeLöschen(int n)		// Wir müssen nie einzelne Knoten löschen, also reicht
 	return;
 }
 
-void History(int Sichern, int parameterzahl, ...)
+void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; History(0,1,n) = history n; Histroy(1,1,1000) Sichert die neusten 1000 Elemente
 {
 	va_list ArgumentPointer;
 	int n = ListenAnzahl;		//Anzahl der Auszugeben Elemente wird hier gespeichert werden
