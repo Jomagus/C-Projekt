@@ -73,28 +73,24 @@ void ListeLöschen(int n)		// Wir müssen nie einzelne Knoten löschen, also reicht
 	return;
 }
 
-void History(int parameterzahl, ...)
+void History(int Sichern, int parameterzahl, ...)
 {
 	va_list ArgumentPointer;
-	int n = -1;					//Anzahl der Auszugeben Elemente wird hier gespeichert werden
+	int n = ListenAnzahl;		//Anzahl der Auszugeben Elemente wird hier gespeichert werden
 	if (parameterzahl)			//Wurden Argumente angegeben, müssen sie abgefragt werden 
 	{
 		va_start(ArgumentPointer, parameterzahl);
 		n = va_arg(ArgumentPointer, int);
 		va_end(ArgumentPointer);
-		if (n <= 0)
+		if (n > ListenAnzahl)
 		{
-			//Fehlerbehandlung
+			n = ListenAnzahl;
 		}
 	}
 
 	struct Node *Hilfszeiger;
-	int Zähler = 0;				//Ist verantwortlich für die ID in der History
-
-	if (n == -1)				//wenn -1 hierhin "durchgereicht" wird, ist die if-Schleife nicht durchlaufen worden, es werden also alle Kommandos ausgegeben
-	{
-		n = ListenAnzahl;
-	}
+	int Zähler = 0;										//Ist verantwortlich für die ID in der History
+	FILE *HistoryFile = fopen(".hhush.histfile", "ab");	//Öffnet (und erstellt gegebenenfalls) die History-Datei
 
 	for (; n > 0; n--)
 	{
@@ -104,10 +100,19 @@ void History(int parameterzahl, ...)
 		{
 			Hilfszeiger = Hilfszeiger->Next;
 		}
-		printf("%i %s", Zähler, Hilfszeiger);
+		if (Sichern == 0)
+		{
+			printf("%i %s", Zähler, Hilfszeiger);
+		}
+		else if (Sichern == 1)
+		{
+			fputs(Hilfszeiger->Eingabe, HistoryFile);
+		}
+
 		Zähler++;
 	}
-	
+
+	fclose(HistoryFile);
 	return;
 }
 
@@ -122,28 +127,10 @@ int main(void)
 		NeuesElement(fgets(input, sizeof(input), stdin));
 		NeuesElement(fgets(input, sizeof(input), stdin));
 		NeuesElement(fgets(input, sizeof(input), stdin));
-		History(0);
-		ListeLöschen(1);
+		
 	}
 
 
-	FILE *HistoryFile = fopen(".hhush.histfile", "ab");	//Öffnet (und erstellt gegebenenfalls) die History-Datei
-	struct Node *Hilfszeiger = Anfang;
-	while (Anfang != NULL)
-	{
-		if (n == 1)
-		{
-			fputs(Anfang->Eingabe, HistoryFile);		//Routine zur Dateispeicherung ; falls n=0 => nur löschen für "history -c", ansonten history speichern mit n=1
-		}
-		Hilfszeiger = Anfang->Next;
-		free(Anfang);
-		Anfang = Hilfszeiger;
-	}
-	ListenAnzahl = 0;
-	if (ferror(HistoryFile))
-	{
-		//Fehlerbehandlung einbauen für Fehler beim Schreiben
-	}
-	fclose(HistoryFile);
+	History(1, 1, 1000);			// Sichert die neusten 1000 Elemente der Histroy in der Datei
 	return 0;
 }
