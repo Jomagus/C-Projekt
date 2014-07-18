@@ -3,10 +3,16 @@
 was aber zu problemen mit gcc führen kann; Der Befehl ignoriert das Funktionen "unsicher" sind beim kompilieren in Visual Studio
 (sonst würde das kompilieren gar nicht erst funktionieren, sondern nur zu einer Fehlermeldung führen) */
 
-#include <stdio.h>		//Für fgets und generell die Ein/Ausgabe
+#include <stdio.h>		//für z.B. fgets und generell die Ein/Ausgabe
 #include <stdlib.h>		//z.B. für NULL, malloc() und free()
 #include <string.h>		//für strncpy, (memcpy)
 #include <stdarg.h>		//für variable Parameteranzahl
+
+void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
+{
+	fprintf(stderr, "Ein Fehler ist aufgetreten. Fehler: %s \n", Fehler);
+	return;
+}
 
 /*******************************************
  *******Hier beginnt das History-Modul******
@@ -29,7 +35,7 @@ void NeuesElement(char Input[256])
 
 	if (NeuerNode == NULL)	//Falls kein Speicher freigegeben werden konnte
 	{
-		//Fehlerbehandlung noch machen
+		FehlerFunktion("Es konnte kein Speicher für die history reserviert werden.");
 		return;
 	}
 
@@ -73,8 +79,9 @@ void ListeLöschen()		// Wir müssen nie einzelne Knoten löschen, also reicht eine
 
 void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; History(0,1,n) = history n; Histroy(1,1,1000) Sichert die neusten 1000 Elemente
 {
-	if (Anfang == NULL)	//Sollte nie vorkommen, da zuminedest der Befehl history [n] immer ausgegeben werden müsste; Beim Debugging aber nötig geworden
+	if (Anfang == NULL)	//Sollte nie vorkommen, da zuminedest der Befehl history [n] immer ausgegeben werden müsste
 	{
+		FehlerFunktion("Die History ist leer");
 		return;
 	}
 
@@ -94,9 +101,10 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 	struct Node *Hilfszeiger = Anfang;
 	int Zähler = 0;										//Ist verantwortlich für die ID in der History
 	FILE *HistoryFile = fopen(".hhush.histfile", "wb");	//Öffnet (und erstellt gegebenenfalls) die History-Datei
-	if (HistoryFile == NULL)
+	if ((HistoryFile == NULL) && (Sichern == 1))
 	{
-		//Fehlerbehandlung
+		FehlerFunktion("History-Datei konnte nicht zum schreiben geöffnet werden");
+		return;
 	}
 
 	int k = 1;
@@ -137,7 +145,6 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 	//	{
 	//		fputs(Hilfszeiger->Eingabe, HistoryFile);
 	//	}
-
 	//	Zähler++;
 	//}
 
