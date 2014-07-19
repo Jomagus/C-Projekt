@@ -162,14 +162,13 @@ int InputStufe_1Fehler;		//Wird verwendet um bei Fehlern in Stufe 1 weitere Stuf
 struct StackElement
 {
 	char InputText[256];
-	int Länge;
 	struct StackElement *Next;
 };
 
 struct StackElement *AnfangStack = NULL;
 int StackTiefe;
 
-void Push(char Input[256], int Länge)
+void Push(char Input[256])
 {
 	struct StackElement *NeuerNode = malloc(sizeof(struct StackElement));		//Speicher reservieren für das neue Stack Element
 
@@ -193,7 +192,6 @@ void Push(char Input[256], int Länge)
 	StackTiefe++;
 
 	memcpy(NeuerNode->InputText, Input, 256 * sizeof(char)); //Sicherer als strncpy, da Bufferoverflows verhindert werden
-	NeuerNode->Länge = Länge;
 
 	return;
 }
@@ -204,17 +202,12 @@ struct StackElement Pop(void)
 
 	if (AnfangStack == NULL)	//Falls der Stack leer ist
 	{
-		if (StackTiefe != 0)
-		{
-			FehlerFunktion("Fehler in der Stacktiefe");
-		}
-		Rückgabe.Länge = -1;
+		FehlerFunktion("Input_1 Stack ist leer");
 		Rückgabe.Next = NULL;
 	}
 	else
 	{
 		memcpy(Rückgabe.InputText, AnfangStack->InputText, 256 * sizeof(char));
-		Rückgabe.Länge = AnfangStack->Länge;
 		Rückgabe.Next = NULL;
 
 		struct StackElement *HilfsZeiger = AnfangStack->Next;	//Wir geben den Speicherplatz für das oberste Stackelement frei
@@ -263,19 +256,19 @@ void InputSchritt_1(char Input[256])
 	}
 	else
 	{
-		char EinzelInput[256];			// Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
+		char EinzelInput[256];			//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
 		int RestInputZähler = 0;		//Für die Numerierung des RestInputs
 		int HilfsZähler;
 
-		for (HilfsZähler = Zähler + 1; HilfsZähler <= InputLänge; HilfsZähler++)
+		for (HilfsZähler = Zähler + 1; HilfsZähler <= InputLänge; HilfsZähler++)		//Kopiert das Kommando hinter dem letzen Pipe Symbol in EinzelInput
 		{
 			EinzelInput[RestInputZähler] = Input[HilfsZähler];
 			RestInputZähler++;
 		}
-		EinzelInput[RestInputZähler] = '\0';
+		EinzelInput[RestInputZähler] = '\0'; //Beendet den String des neusten Kommandos
 		Input[Zähler] = '\n';		//Das ehemals letze Pipes Symbol wird zu einer Newline, somit kürzen wir den String um den letzen Befehl
 		Input[Zähler+  1] = '\0';	//Den String beende wir noch mit \0
-		Push(EinzelInput, InputLänge-Zähler);
+		Push(EinzelInput);
 		InputSchritt_1(Input);
 		return;
 	}
@@ -313,6 +306,10 @@ int main(void)
 		{
 			fgets(Input, sizeof(Input), stdin);
 			InputSchritt_1(Input);
+
+
+
+
 			struct StackElement Test = Pop();
 			printf("%s", Test.InputText);
 			Test = Pop();
