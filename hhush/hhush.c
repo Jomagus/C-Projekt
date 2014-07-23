@@ -166,6 +166,12 @@ int InputStufe_0(char Input[256])		//gibt 0 zurück, falls die Eingabe nicht "lee
 		{
 			return 0;
 		}
+
+		if (Zähler > 256)
+		{
+			FehlerFunktion("Eingabe zu lang");
+			return 1;
+		}
 	}
 	return 1;
 }
