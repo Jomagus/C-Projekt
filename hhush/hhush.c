@@ -154,6 +154,23 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 }
 
 /*************************************************
+*******Hier beginnt das Stufe-0-Input-Modul ******
+*************************************************/
+
+int InputStufe_0(char Input[256])		//gibt 0 zurück, falls die Eingabe nicht "leer" ist
+{
+	int Zähler;
+	for (Zähler = 0; Input[Zähler] != '\n'; Zähler++)
+	{
+		if ((Input[Zähler] != '\t') && (Input[Zähler] != ' '))
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/*************************************************
 *******Hier beginnt das Stufe-1-Input-Modul ******
 *************************************************/
 
@@ -220,7 +237,7 @@ struct StackElement Pop(void)
 	return Rückgabe;
 }
 
-void InputSchritt_1(char Input[256])
+void InputStufe_1(char Input[256])
 {
 	InputStufe_1Fehler = 0;
 	int InputLänge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLänge]='\n'
@@ -269,7 +286,7 @@ void InputSchritt_1(char Input[256])
 		Input[Zähler] = '\n';		//Das ehemals letze Pipes Symbol wird zu einer Newline, somit kürzen wir den String um den letzen Befehl
 		Input[Zähler+  1] = '\0';	//Den String beende wir noch mit \0
 		Push(EinzelInput);
-		InputSchritt_1(Input);
+		InputStufe_1(Input);
 		return;
 	}
 }
@@ -278,7 +295,7 @@ void InputSchritt_1(char Input[256])
 int main(void)
 {
 	/*******************************************
-	*******Hier wird die history importiert******
+	*******Hier wird die History importiert******
 	********************************************/
 
 	FILE *HistoryFile = fopen(".hhush.histfile", "rb");	//Öffnet die History-Datei
@@ -305,15 +322,31 @@ int main(void)
 		while (1)
 		{
 			fgets(Input, sizeof(Input), stdin);
-			InputSchritt_1(Input);
+			if (InputStufe_0(Input))	//falls nur Leerzeichen/Tabs eingegeben wurden, wird neu angefangen
+			{
+				//evtl. noch Fehlerbehandlung einbauen
+				continue;
+			}
+			NeuesElement(Input);		//speichert die Eingabe in der History
+			InputStufe_1(Input);
+			if (InputStufe_1Fehler == 1)
+			{
+				//Fehlerbehandlung
+				continue;
+			}
 
 
 
+			History(0, 0);
+			int Testzähler=1;
+			struct StackElement Test;
+			while (StackTiefe>0)
+			{
+				Test = Pop();
+				printf("%d: %s", Testzähler, Test.InputText);
 
-			struct StackElement Test = Pop();
-			printf("%s", Test.InputText);
-			Test = Pop();
-			printf("%s", Test.InputText);
+				Testzähler++;
+			}
 
 
 
