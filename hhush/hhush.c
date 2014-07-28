@@ -63,7 +63,6 @@ void NeuesElement(char Input[256])
 	return;
 }
 
-
 void ListeLöschen()		// Wir müssen nie einzelne Knoten löschen, also reicht eine Funktion, die alle Knoten löscht, und somit ihren Speicherplatz wieder freizugeben
 {
 	struct Node *Hilfszeiger = Anfang;
@@ -274,7 +273,7 @@ void InputStufe_1(char Input[256])
 
 	if (Zähler < 0)		//Wenn kein (weiteres) Pipe Symbol gefunden worden ist
 	{
-		Push(Input, InputLänge);
+		Push(Input);
 		return;
 	}
 	else
@@ -301,7 +300,7 @@ void InputStufe_1(char Input[256])
 *******Hier beginnt das Stufe-2-Input-Modul ******
 *************************************************/
 
-void InputStufe_2()				//iteriert über dem Stufe-1-Stack und ersetzt alle Tabs durch Leerzeichen
+void InputStufe_2(void)				//iteriert über dem Stufe-1-Stack und ersetzt alle Tabs durch Leerzeichen
 {
 	struct StackElement *Hilfspointer = AnfangStack;
 	int Zähler;
@@ -323,7 +322,7 @@ void InputStufe_2()				//iteriert über dem Stufe-1-Stack und ersetzt alle Tabs d
 *******Hier beginnt das Stufe-3-Input-Modul ******
 *************************************************/
 
-void InputStufe_3()				//iteriert über dem Stufe-1-Stack und minimiert die Leerzeichen maximal
+void InputStufe_3(void)				//iteriert über dem Stufe-1-Stack und minimiert die Leerzeichen maximal
 {
 	struct StackElement *Hilfspointer = AnfangStack;
 	int Zähler;							//wird als Zähler für das Char Array verwendet, dass die bereinigte Nutzereingabe enthält
@@ -376,6 +375,117 @@ void InputStufe_3()				//iteriert über dem Stufe-1-Stack und minimiert die Leerz
 	return;
 }
 
+/*************************************************
+*******Hier beginnt das Stufe-4-Input-Modul ******
+*************************************************/
+
+struct BefehlsListe
+{
+	char Befehl[256];
+	struct BefehlsListe *Next;
+};
+
+struct BefehlsListe *BefehlsListenAnfang = NULL;
+
+/* Die Folgende Funktion InputStufe_4 ist eingentlich nur eine abgespeckte Kopie von InputStufe_1 (und NeuerBefehl() ist eigentlich Push(),
+bzw. Pop() ist GetBefehl()), nur dass hier nicht bei Pipe Symbolen '|' sondern be Leerzeichen getrennt wird. Es spart mir nur sehr viel Arbeit, 
+ein zweite Funktion zu schreiben, die quasi dasselbe tut, nur mit einem anderen Char. */
+
+void NeuerBefehl(char Input[256])
+{
+	struct BefehlsListe *NeuerBefehl = malloc(sizeof(struct BefehlsListe));		//Speicher reservieren für das neuen Befehl
+
+	if (NeuerBefehl == NULL)	//Falls kein Speicher freigegeben werden konnte
+	{
+		FehlerFunktion("Es konnte kein Speicher für den Befehl reserviert werden.");
+		return;
+	}
+
+	if (BefehlsListenAnfang == NULL)		//Falls die Liste leer isi
+	{
+		BefehlsListenAnfang = NeuerBefehl;
+		NeuerBefehl->Next = NULL;
+	}
+	else
+	{
+		NeuerBefehl->Next = BefehlsListenAnfang;
+		BefehlsListenAnfang = NeuerBefehl;
+	}
+
+	memcpy(NeuerBefehl->Befehl, Input, 256 * sizeof(char));
+
+	return;
+}
+
+void InputStufe_4(char Input[256])
+{
+	int InputLänge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLänge]='\n'
+
+	for (InputLänge = 0; Input[InputLänge] != '\n'; InputLänge++)
+	{
+		//Zählt wie lange die Nutzereingabe ist
+	}
+
+	int Zähler;		//Zählt an welcher Stelle im String ein Leerzeichen ist, von hinten an
+	for (Zähler = InputLänge; Input[Zähler] != ' '; Zähler--)
+	{
+		if (Zähler < 0)
+		{
+			break;
+		}
+	}
+
+	if (Zähler < 0)		//Wenn kein (weiteres) Leerzeichen gefunden worden ist
+	{
+		Input[InputLänge] = '\0';
+		NeuerBefehl(Input);
+		return;
+	}
+	else
+	{
+		char EinzelInput[256];			//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
+		int RestInputZähler = 0;		//Für die Numerierung des RestInputs
+		int HilfsZähler;
+
+		for (HilfsZähler = Zähler + 1; HilfsZähler <= InputLänge; HilfsZähler++)		//Kopiert das Kommando hinter dem letzen Pipe Symbol in EinzelInput
+		{
+			EinzelInput[RestInputZähler] = Input[HilfsZähler];
+			RestInputZähler++;
+		}
+		EinzelInput[RestInputZähler-1] = '\0'; //Beendet den String des neusten Kommandos
+		Input[Zähler] = '\0';		//Das ehemalige Leerzeichen wird zu '\0'
+		NeuerBefehl(EinzelInput);
+		InputStufe_4(Input);
+		return;
+	}
+}
+
+struct BefehlsListe GetBefehl(void)
+{
+	struct  BefehlsListe Rückgabe;		//Wir kopieren das oberste Stackelement in Rückgabe
+
+	if (BefehlsListenAnfang == NULL)	//Falls die Befehlsliste leer ist
+	{
+		FehlerFunktion("Befehlsliste ist leer");
+		Rückgabe.Next = NULL;
+		return Rückgabe;
+	}
+
+	memcpy(Rückgabe.Befehl, BefehlsListenAnfang->Befehl, 256 * sizeof(char));
+	Rückgabe.Next = BefehlsListenAnfang->Next;
+
+
+	struct BefehlsListe *HilfsZeiger = BefehlsListenAnfang->Next;	//Wir geben den Speicherplatz für das oberste Stackelement frei
+	free(BefehlsListenAnfang);
+	BefehlsListenAnfang = HilfsZeiger;
+	return Rückgabe;
+}
+
+
+
+
+
+
 
 
 
@@ -427,15 +537,14 @@ int main(void)
 
 
 
+			//Bis hier steht "fertiger" Code
 
+			InputStufe_4(Pop().InputText);
 
-			int Testzähler=1;
-			struct StackElement Test;
-			while (StackTiefe>0)
+			int Testzähler = 1;
+			while (BefehlsListenAnfang != NULL)
 			{
-				Test = Pop();
-				printf("%d: %s", Testzähler, Test.InputText);
-
+				printf("%d: %s \n", Testzähler, GetBefehl().Befehl);
 				Testzähler++;
 			}
 
