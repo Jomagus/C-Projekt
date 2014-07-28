@@ -8,6 +8,8 @@ was aber zu problemen mit gcc führen kann; Der Befehl ignoriert das Funktionen "
 #include <string.h>		//für memcpy
 #include <stdarg.h>		//für variable Parameteranzahl
 
+#define INPUT_SIZE_MAX 256		//falls später längere Inputs bearbeitet werden sollen
+
 void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
 {
 	fprintf(stderr, "Ein Fehler ist aufgetreten. Fehler: %s \n", Fehler);
@@ -20,7 +22,7 @@ void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
 
 struct Node
 {
-	char Eingabe[256];
+	char Eingabe[INPUT_SIZE_MAX];
 	struct Node *Prev;
 	struct Node *Next;
 };
@@ -29,7 +31,7 @@ struct Node *Anfang = NULL;
 
 int ListenAnzahl = 0;		//Gibt die Anzahl der gespeicherten Elemente an
 
-void NeuesElement(char Input[256])
+void NeuesElement(char Input[INPUT_SIZE_MAX])
 {
 	struct Node *NeuerNode = malloc(sizeof(struct Node));		//Speicher reservieren für den neuen Knoten
 
@@ -56,9 +58,9 @@ void NeuesElement(char Input[256])
 
 	ListenAnzahl++;
 
-	//strncpy(NeuerNode->Eingabe, Input, 256);
+	//strncpy(NeuerNode->Eingabe, Input, INPUT_SIZE_MAX);
 
-	memcpy(NeuerNode->Eingabe, Input, 256 * sizeof(char)); //Sicherer als strncpy, da Bufferoverflows verhindert werden
+	memcpy(NeuerNode->Eingabe, Input, INPUT_SIZE_MAX * sizeof(char)); //Sicherer als strncpy, da Bufferoverflows verhindert werden
 
 	return;
 }
@@ -156,7 +158,7 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 *******Hier beginnt das Stufe-0-Input-Modul ******
 *************************************************/
 
-int InputStufe_0(char Input[256])		//gibt 0 zurück, falls die Eingabe nicht "leer" ist
+int InputStufe_0(char Input[INPUT_SIZE_MAX])		//gibt 0 zurück, falls die Eingabe nicht "leer" ist
 {
 	int Zähler;
 	for (Zähler = 0; Input[Zähler] != '\n'; Zähler++)
@@ -166,7 +168,7 @@ int InputStufe_0(char Input[256])		//gibt 0 zurück, falls die Eingabe nicht "lee
 			return 0;
 		}
 
-		if (Zähler > 256)
+		if (Zähler > INPUT_SIZE_MAX)
 		{
 			FehlerFunktion("Eingabe zu lang");
 			return 1;
@@ -183,14 +185,14 @@ int InputStufe_1Fehler;		//Wird verwendet um bei Fehlern in Stufe 1 weitere Stuf
 
 struct StackElement
 {
-	char InputText[256];
+	char InputText[INPUT_SIZE_MAX];
 	struct StackElement *Next;
 };
 
 struct StackElement *AnfangStack = NULL;
 int StackTiefe;
 
-void Push(char Input[256])
+void Push(char Input[INPUT_SIZE_MAX])
 {
 	struct StackElement *NeuerNode = malloc(sizeof(struct StackElement));		//Speicher reservieren für das neue Stack Element
 
@@ -213,7 +215,7 @@ void Push(char Input[256])
 
 	StackTiefe++;
 
-	memcpy(NeuerNode->InputText, Input, 256 * sizeof(char)); //Sicherer als strncpy, da Bufferoverflows verhindert werden
+	memcpy(NeuerNode->InputText, Input, INPUT_SIZE_MAX * sizeof(char)); //Sicherer als strncpy, da Bufferoverflows verhindert werden
 
 	return;
 }
@@ -229,7 +231,7 @@ struct StackElement Pop(void)
 	}
 	else
 	{
-		memcpy(Rückgabe.InputText, AnfangStack->InputText, 256 * sizeof(char));
+		memcpy(Rückgabe.InputText, AnfangStack->InputText, INPUT_SIZE_MAX * sizeof(char));
 		Rückgabe.Next = NULL;
 
 		struct StackElement *HilfsZeiger = AnfangStack->Next;	//Wir geben den Speicherplatz für das oberste Stackelement frei
@@ -242,14 +244,14 @@ struct StackElement Pop(void)
 	return Rückgabe;
 }
 
-void InputStufe_1(char Input[256])
+void InputStufe_1(char Input[INPUT_SIZE_MAX])
 {
 	InputStufe_1Fehler = 0;
 	int InputLänge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLänge]='\n'
 
 	for (InputLänge = 0; Input[InputLänge] != '\n'; InputLänge++)
 	{
-		if (InputLänge > 256)		//Schaut ob die Eingabe zu lang ist
+		if (InputLänge > INPUT_SIZE_MAX)		//Schaut ob die Eingabe zu lang ist
 		{
 			FehlerFunktion("Eingabe zu lang");
 			InputStufe_1Fehler = 1;
@@ -278,7 +280,7 @@ void InputStufe_1(char Input[256])
 	}
 	else
 	{
-		char EinzelInput[256];			//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
+		char EinzelInput[INPUT_SIZE_MAX];			//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
 		int RestInputZähler = 0;		//Für die Numerierung des RestInputs
 		int HilfsZähler;
 
@@ -332,7 +334,7 @@ void InputStufe_3(void)				//iteriert über dem Stufe-1-Stack und minimiert die L
 		{
 			for (Zähler = 0; Hilfspointer->InputText[Zähler] != '\n'; Zähler ++)
 			{
-				if (Zähler == 256-1)				//Ausnahmesituation bei sehr langen Eingaben (kann dies überhaupt eintreten?)
+				if (Zähler == INPUT_SIZE_MAX-1)				//Ausnahmesituation bei sehr langen Eingaben (kann dies überhaupt eintreten?)
 				{
 					Hilfspointer->InputText[Zähler] = '\0';
 					break;
@@ -353,7 +355,7 @@ void InputStufe_3(void)				//iteriert über dem Stufe-1-Stack und minimiert die L
 				int HilfsZähler = Zähler;
 				for (; Hilfspointer->InputText[HilfsZähler] != '\n'; HilfsZähler++)
 				{
-					if (HilfsZähler == 256 - 1)				//Ausnahmesituation bei sehr langen Eingaben
+					if (HilfsZähler == INPUT_SIZE_MAX - 1)				//Ausnahmesituation bei sehr langen Eingaben
 					{
 						Hilfspointer->InputText[HilfsZähler] = '\0';
 						break;
@@ -381,7 +383,7 @@ void InputStufe_3(void)				//iteriert über dem Stufe-1-Stack und minimiert die L
 
 struct BefehlsListe
 {
-	char Befehl[256];
+	char Befehl[INPUT_SIZE_MAX];
 	struct BefehlsListe *Next;
 };
 
@@ -392,7 +394,7 @@ int BefehlAnzahl;		//Speichert wie viele Argumente übergeben wurden (der Befehl 
 bzw. Pop() ist GetBefehl()), nur dass hier nicht bei Pipe Symbolen '|' sondern be Leerzeichen getrennt wird. Es spart mir nur sehr viel Arbeit, 
 ein zweite Funktion zu schreiben, die quasi dasselbe tut, nur mit einem anderen Char. */
 
-void NeuerBefehl(char Input[256])
+void NeuerBefehl(char Input[INPUT_SIZE_MAX])
 {
 	struct BefehlsListe *NeuerBefehl = malloc(sizeof(struct BefehlsListe));		//Speicher reservieren für das neuen Befehl
 
@@ -414,12 +416,12 @@ void NeuerBefehl(char Input[256])
 	}
 
 	BefehlAnzahl++;
-	memcpy(NeuerBefehl->Befehl, Input, 256 * sizeof(char));
+	memcpy(NeuerBefehl->Befehl, Input, INPUT_SIZE_MAX * sizeof(char));
 
 	return;
 }
 
-void InputStufe_4(char Input[256])
+void InputStufe_4(char Input[INPUT_SIZE_MAX])
 {
 	int InputLänge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLänge]='\n'
 
@@ -445,7 +447,7 @@ void InputStufe_4(char Input[256])
 	}
 	else
 	{
-		char EinzelInput[256];			//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
+		char EinzelInput[INPUT_SIZE_MAX];			//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
 		int RestInputZähler = 0;		//Für die Numerierung des RestInputs
 		int HilfsZähler;
 
@@ -473,7 +475,7 @@ struct BefehlsListe GetBefehl(void)
 		return Rückgabe;
 	}
 
-	memcpy(Rückgabe.Befehl, BefehlsListenAnfang->Befehl, 256 * sizeof(char));
+	memcpy(Rückgabe.Befehl, BefehlsListenAnfang->Befehl, INPUT_SIZE_MAX * sizeof(char));
 	Rückgabe.Next = NULL;			//aus Sicherheit
 
 
@@ -482,6 +484,18 @@ struct BefehlsListe GetBefehl(void)
 	BefehlsListenAnfang = HilfsZeiger;
 	BefehlAnzahl--;
 	return Rückgabe;
+}
+
+void BefehlsListeReset(void)		//wir löschen die komplette Befehlsliste und geben ihren Speicherplatz wieder frei (bei ungültigen Funktionsaufrufen eingesetzt)
+{
+	while (BefehlsListenAnfang != NULL)
+	{
+		struct BefehlsListe *HilfsZeiger = BefehlsListenAnfang->Next;
+		free(BefehlsListenAnfang);
+		BefehlsListenAnfang = HilfsZeiger;
+	}
+	BefehlAnzahl = 0;
+	return;
 }
 
 /*************************************************
@@ -549,12 +563,12 @@ int main(void)
 	FILE *HistoryFile = fopen(".hhush.histfile", "rb");	//Öffnet die History-Datei
 	if (HistoryFile != NULL)	//Falls die History-Datei nicht geöffnet werden konnte (im Regelfall also noch nicht erstellt wurde), wird nichts importiert
 	{
-		char ImportBuffer[256];
-		char *ImportPointer = fgets(ImportBuffer, 256, HistoryFile);
+		char ImportBuffer[INPUT_SIZE_MAX];
+		char *ImportPointer = fgets(ImportBuffer, INPUT_SIZE_MAX, HistoryFile);
 		while (ImportPointer != NULL)			//Wir lesen die Datei Zeilenweise aus, bis wir am Ende der Datei sind (in der Datei sind maximal 1000 Befehle)
 		{
 			NeuesElement(ImportBuffer);
-			ImportPointer = fgets(ImportBuffer, 256, HistoryFile);
+			ImportPointer = fgets(ImportBuffer, INPUT_SIZE_MAX, HistoryFile);
 		}
 		fclose(HistoryFile);
 	}
@@ -562,7 +576,7 @@ int main(void)
 	/*******************************************
 	*******Hier beginnt das Input-Modul ******
 	********************************************/
-		char Input[256];	//Wird zur Speicherung der Nutzereingabe verwendet
+		char Input[INPUT_SIZE_MAX];	//Wird zur Speicherung der Nutzereingabe verwendet
 
 
 
@@ -584,26 +598,23 @@ int main(void)
 			InputStufe_2();				//ersetzt alle Tabs in der Eingabe durch Leerzeichen
 			InputStufe_3();				//löscht alle Leerzeichen, die keine Eingabe trennen
 
+			while (StackTiefe > 0)		//diese Schleife führt hintereinander die durch '|' getrennten Befehle aus
+			{
+				InputStufe_4(Pop().InputText);
+				FunktionsAufrufer();
 
-			
+				if (BefehlAnzahl > 0)
+				{
+					FehlerFunktion("BefehlsListe nicht leer");
+					BefehlsListeReset();
+				}
+			}
 
 
 			//Bis hier steht "fertiger" Code
-			InputStufe_4(Pop().InputText);
-			int Test = BefehlInterpreter();
-			printf("%d \n", Test);
 
 
-			//InputStufe_4(Pop().InputText);
-
-			//int Testzähler = 1;
-			//while (BefehlsListenAnfang != NULL)
-			//{
-			//	printf("%d: %s \n", Testzähler, GetBefehl().Befehl);
-			//	Testzähler++;
-			//}
-
-
+			//TODO ALLE Outputs werden zwischengespeichert, erst nach dem durchlaufen der while (StackTiefe > 0) Schleife ausgegeben
 
 
 
