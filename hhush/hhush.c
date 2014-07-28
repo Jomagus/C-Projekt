@@ -297,6 +297,87 @@ void InputStufe_1(char Input[256])
 	}
 }
 
+/*************************************************
+*******Hier beginnt das Stufe-2-Input-Modul ******
+*************************************************/
+
+void InputStufe_2()				//iteriert über dem Stufe-1-Stack und ersetzt alle Tabs durch Leerzeichen
+{
+	struct StackElement *Hilfspointer = AnfangStack;
+	int Zähler;
+	while (Hilfspointer != NULL)	//diese While Konstuktion iteriert über dem Stufe-1-Stack
+	{
+		for (Zähler = 0; Hilfspointer->InputText[Zähler] != '\n'; Zähler++)		//diese for-Schleife läuft über den Nutzerinput
+		{
+			if (Hilfspointer->InputText[Zähler] == '\t')
+			{
+				Hilfspointer->InputText[Zähler] = ' ';
+			}
+		}
+		Hilfspointer = Hilfspointer->Next;
+	}
+	return;
+}
+
+/*************************************************
+*******Hier beginnt das Stufe-3-Input-Modul ******
+*************************************************/
+
+void InputStufe_3()				//iteriert über dem Stufe-1-Stack und minimiert die Leerzeichen maximal
+{
+	struct StackElement *Hilfspointer = AnfangStack;
+	int Zähler;							//wird als Zähler für das Char Array verwendet, dass die bereinigte Nutzereingabe enthält
+	while (Hilfspointer != NULL)		//diese While Konstuktion iteriert über dem Stufe-1-Stack (wie bereits in Stufe-2)
+	{
+		if (Hilfspointer->InputText[0] == ' ')		//Wenn die Eingabe mit einem Leerzeichen beginnt
+		{
+			for (Zähler = 0; Hilfspointer->InputText[Zähler] != '\n'; Zähler ++)
+			{
+				if (Zähler == 256-1)				//Ausnahmesituation bei sehr langen Eingaben (kann dies überhaupt eintreten?)
+				{
+					Hilfspointer->InputText[Zähler] = '\0';
+					break;
+				}
+				Hilfspointer->InputText[Zähler] = Hilfspointer->InputText[Zähler + 1];	//verschiebe die komplette Eingabe "eins nach vorne" (auf Pos. 0 war ein Leerzeichen)
+			}
+			continue;		//Starte von Vorne, falls auch auf Position 1 ein Leerzeichen war
+		}
+
+		for (Zähler = 0; Hilfspointer->InputText[Zähler] != '\n'; Zähler++)	//hier wird über den Nutzerinput gelaufen, desweiteren ist das erste Zeichen kein Leerzeichen
+		{
+			/* Wir wollen wenn mehrere Leerzeichen hintereinander stehen diese auf ein einzelnes Leerzeichen als Trenner von Eingaben reduzieren.
+			Dazu schauen wir, ob hinter einem Leerzeichen ein weiteres steht und falls dies der Fall ist, verschieben wir alles (mitsammt des zweiten Leerzeichens)
+			um eins nach vorne und überschreiben so das erste mit dem Zweiten Leerzeichen. Wenn wir dies gemacht haben, wiederholen wir diesen Schritt auf dieser
+			Position (deshalb Zähler--; ), bis dort keine zwei Leerzeichen mehr hintereinander stehen. */
+			if (Hilfspointer->InputText[Zähler] == ' ' && Hilfspointer->InputText[Zähler + 1] == ' ')
+			{
+				int HilfsZähler = Zähler;
+				for (; Hilfspointer->InputText[HilfsZähler] != '\n'; HilfsZähler++)
+				{
+					if (HilfsZähler == 256 - 1)				//Ausnahmesituation bei sehr langen Eingaben
+					{
+						Hilfspointer->InputText[HilfsZähler] = '\0';
+						break;
+					}
+					Hilfspointer->InputText[HilfsZähler] = Hilfspointer->InputText[HilfsZähler + 1];		//verschiebe alles "eins nach vorne"
+					Zähler--;
+				}
+			}
+		}
+
+		if (Hilfspointer->InputText[Zähler-1] == ' ')	//falls direkt vor dem \n noch ein Leerzeichen ist
+		{
+			Hilfspointer->InputText[Zähler - 1] = '\n';
+			Hilfspointer->InputText[Zähler] = '\0';
+		}
+
+		Hilfspointer = Hilfspointer->Next;
+	}
+	return;
+}
+
+
+
 
 int main(void)
 {
@@ -330,20 +411,24 @@ int main(void)
 			fgets(Input, sizeof(Input), stdin);
 			if (InputStufe_0(Input))	//falls nur Leerzeichen/Tabs eingegeben wurden, wird neu angefangen
 			{
-				//evtl. noch Fehlerbehandlung einbauen
 				continue;
 			}
-			NeuesElement(Input);		//speichert die Eingabe in der History
 			InputStufe_1(Input);
 			if (InputStufe_1Fehler == 1)
 			{
 				//Fehlerbehandlung
 				continue;
 			}
+			NeuesElement(Input);		//speichert die Eingabe in der History; wird erst hier gemacht, da erst in Stufe 1 auf länge überprüft wird
+			InputStufe_2();				//ersetzt alle Tabs in der Eingabe durch Leerzeichen
+			InputStufe_3();				//löscht alle Leerzeichen, die keine Eingabe trennen
 
 
 
-			History(0, 0);
+
+
+
+
 			int Testzähler=1;
 			struct StackElement Test;
 			while (StackTiefe>0)
@@ -392,7 +477,7 @@ int main(void)
 
 
 
-	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
-	ListeLöschen();					//Um Speicherplatz freizugeben
-	return 0;
+		History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
+		ListeLöschen();					//Um Speicherplatz freizugeben
+		return 0;
 }
