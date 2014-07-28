@@ -5,7 +5,7 @@ was aber zu problemen mit gcc führen kann; Der Befehl ignoriert das Funktionen "
 
 #include <stdio.h>		//für z.B. fgets und generell die Ein/Ausgabe
 #include <stdlib.h>		//z.B. für NULL, malloc() und free()
-#include <string.h>		//für strncpy, (memcpy)
+#include <string.h>		//für memcpy
 #include <stdarg.h>		//für variable Parameteranzahl
 
 void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
@@ -386,6 +386,7 @@ struct BefehlsListe
 };
 
 struct BefehlsListe *BefehlsListenAnfang = NULL;
+int BefehlAnzahl;		//Speichert wie viele Argumente übergeben wurden (der Befehl mitgezählt; gut zum Vergleich, ob falsche menge an Argumenten eingegeben wurde)
 
 /* Die Folgende Funktion InputStufe_4 ist eingentlich nur eine abgespeckte Kopie von InputStufe_1 (und NeuerBefehl() ist eigentlich Push(),
 bzw. Pop() ist GetBefehl()), nur dass hier nicht bei Pipe Symbolen '|' sondern be Leerzeichen getrennt wird. Es spart mir nur sehr viel Arbeit, 
@@ -412,6 +413,7 @@ void NeuerBefehl(char Input[256])
 		BefehlsListenAnfang = NeuerBefehl;
 	}
 
+	BefehlAnzahl++;
 	memcpy(NeuerBefehl->Befehl, Input, 256 * sizeof(char));
 
 	return;
@@ -472,20 +474,69 @@ struct BefehlsListe GetBefehl(void)
 	}
 
 	memcpy(Rückgabe.Befehl, BefehlsListenAnfang->Befehl, 256 * sizeof(char));
-	Rückgabe.Next = BefehlsListenAnfang->Next;
+	Rückgabe.Next = NULL;			//aus Sicherheit
 
 
 	struct BefehlsListe *HilfsZeiger = BefehlsListenAnfang->Next;	//Wir geben den Speicherplatz für das oberste Stackelement frei
 	free(BefehlsListenAnfang);
 	BefehlsListenAnfang = HilfsZeiger;
+	BefehlAnzahl--;
 	return Rückgabe;
 }
 
+/*************************************************
+*******Hier beginnt der Befehl-Interpreter ******
+*************************************************/
 
+int BefehlInterpreter(void)
+{
+	struct BefehlsListe Kommando = GetBefehl();
+	if (strcmp(Kommando.Befehl, "exit") == 0)
+	{
+		return 0;
+	}
+	else if (strcmp(Kommando.Befehl, "date") == 0)
+	{
+		return 1;
+	}
+	else if (strcmp(Kommando.Befehl, "history") == 0)
+	{
+		return 2;
+	}
+	else if (strcmp(Kommando.Befehl, "echo") == 0)
+	{
+		return 3;
+	}
+	else if (strcmp(Kommando.Befehl, "ls") == 0)
+	{
+		return 4;
+	}
+	else if (strcmp(Kommando.Befehl, "cd") == 0)
+	{
+		return 5;
+	}
+	else if (strcmp(Kommando.Befehl, "grep") == 0)
+	{
+		return 6;
+	}
+	return -1;
+}
 
-
-
-
+void FunktionsAufrufer()
+{
+	switch (BefehlInterpreter())
+	{
+		case 0: /* EXIT */; break;
+		case 1: /* DATE */; break;
+		case 2: /* History */; break;
+		case 3: /* echo */; break;
+		case 4: /* ls */; break;
+		case 5: /* cd */; break;
+		case 6: /* grep */; break;
+		default: /* no such program */
+		break;
+	}
+}
 
 
 
@@ -534,19 +585,23 @@ int main(void)
 			InputStufe_3();				//löscht alle Leerzeichen, die keine Eingabe trennen
 
 
-
+			
 
 
 			//Bis hier steht "fertiger" Code
-
 			InputStufe_4(Pop().InputText);
+			int Test = BefehlInterpreter();
+			printf("%d \n", Test);
 
-			int Testzähler = 1;
-			while (BefehlsListenAnfang != NULL)
-			{
-				printf("%d: %s \n", Testzähler, GetBefehl().Befehl);
-				Testzähler++;
-			}
+
+			//InputStufe_4(Pop().InputText);
+
+			//int Testzähler = 1;
+			//while (BefehlsListenAnfang != NULL)
+			//{
+			//	printf("%d: %s \n", Testzähler, GetBefehl().Befehl);
+			//	Testzähler++;
+			//}
 
 
 
