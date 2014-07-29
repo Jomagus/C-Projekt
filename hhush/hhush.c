@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS	
 /* Da Visual Studio z.B. strncpy als unsicher ansieht (und strncpy_s haben moechte, da bei strncpy ein Buffer Overflow auftreten kann),
-was aber zu problemen mit gcc fuehren kann; Der Befehl ignoriert das Funktionen "unsicher" sind beim kompilieren in Visual Studio
-(sonst wuerde das kompilieren gar nicht erst funktionieren, sondern nur zu einer Fehlermeldung fuehren) */
+was aber zu problemen mit gcc fuehren kann. Gleiches gilt für fopen (statt fopen_s); Der Befehl ignoriert das Funktionen "unsicher" sind beim 
+kompilieren in Visual Studio (sonst wuerde das kompilieren gar nicht erst funktionieren, sondern nur zu einer Fehlermeldung fuehren) */
 
 #include <stdio.h>		//fuer z.B. fgets und generell die Ein/Ausgabe
 #include <stdlib.h>		//z.B. fuer NULL, malloc() und free()
@@ -15,6 +15,9 @@ void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
 	fprintf(stderr, "Ein Fehler ist aufgetreten. Fehler: %s \n", Fehler);
 	return;
 }
+
+int PipeFehler = 0;		//wird auf 1 gesetzt, falls die ausführung eines Unterprogramms in der Pipeline fehlschlägt
+
 
 /*******************************************
  *******Hier beginnt das History-Modul******
@@ -525,10 +528,66 @@ void FunktionsAufrufer()
 	case 4: /* ls */; break;
 	case 5: /* cd */; break;
 	case 6: /* grep */; break;
-	default: /* no such program */
+	default: PipeFehler = 1;
+		/* no such program */
 		break;
 	}
 }
+
+/*************************************************
+*******Hier beginnt der Pipe-Buffer *************
+*************************************************/
+
+/* Der Pipe-Buffer ist ein Char-Array beliebiger größe, für das dynamisch Speicher reserviert wird.
+Die beliebig große Ausgabe eines Unterprogramms kann so zwischengespeichert werden, falls Piping
+verwendet wird. */
+
+char *GlobalPipeBufferPointer = NULL;
+
+void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zugewiesenen Speicherbereich und gibt einen Pointer darauf zurück
+{
+	if (GlobalPipeBufferPointer != NULL)
+	{
+		FehlerFunktion("PipeBuffer ist noch nicht leer");
+		return;
+	}
+	int InputLeange = strlen(Input);			//schaut wie lang der Input ist
+	char *ReturnPointer = malloc((InputLeange + 1)* sizeof(char));		//reserviert Speicher für die Eingabe + '\0'
+	if (ReturnPointer == NULL)
+	{
+		FehlerFunktion("Es konnte kein Speicher für den PipeBuffer zugewiesen werden");
+		return;
+	}
+	memcpy(ReturnPointer, Input, (InputLeange + 1)* sizeof(char));
+	GlobalPipeBufferPointer = ReturnPointer;
+	return;
+}
+
+void WipePipeBuffer(void)						//löscht den PipeBufferPointer
+{
+	if (GlobalPipeBufferPointer == NULL)
+	{
+		FehlerFunktion("PipeBuffer ist schon leer");
+		return;
+	}
+	free(GlobalPipeBufferPointer);
+	GlobalPipeBufferPointer = NULL;
+	return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -586,6 +645,31 @@ int main(void)
 				FehlerFunktion("BefehlsListe nicht leer");
 				BefehlsListeReset();
 			}
+			if (PipeFehler == 1)	//die Pipe wird nicht weiter ausgeführt, wenn ein Unterprogramm fehlschlägt
+			{
+				while (StackTiefe > 0)	//lösche den Stack mit den weiteren gepipten Befehlen
+				{
+					Pop();
+				}
+				BefehlsListeReset();	//lösche die Befehlsliste
+				PipeFehler = 0;
+				break;
+			}
+		}
+
+		if (PipeFehler == 1)		//falls ein Fehler in der Pipe auftrat, wird der PipeBuffer gelöscht
+		{
+			if (GlobalPipeBufferPointer != NULL)
+			{
+				WipePipeBuffer();
+			}
+			continue;
+		}
+
+		if (GlobalPipeBufferPointer != NULL)
+		{
+			printf(GlobalPipeBufferPointer);
+			WipePipeBuffer();
 		}
 
 
