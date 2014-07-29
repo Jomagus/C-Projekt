@@ -1,14 +1,14 @@
 #define _CRT_SECURE_NO_WARNINGS	
-/* Da Visual Studio z.B. strncpy als unsicher ansieht (und strncpy_s haben möchte, da bei strncpy ein Buffer Overflow auftreten kann),
-was aber zu problemen mit gcc führen kann; Der Befehl ignoriert das Funktionen "unsicher" sind beim kompilieren in Visual Studio
-(sonst würde das kompilieren gar nicht erst funktionieren, sondern nur zu einer Fehlermeldung führen) */
+/* Da Visual Studio z.B. strncpy als unsicher ansieht (und strncpy_s haben moechte, da bei strncpy ein Buffer Overflow auftreten kann),
+was aber zu problemen mit gcc fuehren kann; Der Befehl ignoriert das Funktionen "unsicher" sind beim kompilieren in Visual Studio
+(sonst wuerde das kompilieren gar nicht erst funktionieren, sondern nur zu einer Fehlermeldung fuehren) */
 
-#include <stdio.h>		//für z.B. fgets und generell die Ein/Ausgabe
-#include <stdlib.h>		//z.B. für NULL, malloc() und free()
-#include <string.h>		//für memcpy
-#include <stdarg.h>		//für variable Parameteranzahl
+#include <stdio.h>		//fuer z.B. fgets und generell die Ein/Ausgabe
+#include <stdlib.h>		//z.B. fuer NULL, malloc() und free()
+#include <string.h>		//fuer memcpy
+#include <stdarg.h>		//fuer variable Parameteranzahl
 
-#define INPUT_SIZE_MAX 256		//falls später längere Inputs bearbeitet werden sollen
+#define INPUT_SIZE_MAX 256		//falls spaeter laengere Inputs bearbeitet werden sollen
 
 void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
 {
@@ -18,7 +18,7 @@ void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
 
 /*******************************************
  *******Hier beginnt das History-Modul******
-********************************************/
+ ********************************************/
 
 struct Node
 {
@@ -33,11 +33,11 @@ int ListenAnzahl = 0;		//Gibt die Anzahl der gespeicherten Elemente an
 
 void NeuesElement(char Input[INPUT_SIZE_MAX])
 {
-	struct Node *NeuerNode = malloc(sizeof(struct Node));		//Speicher reservieren für den neuen Knoten
+	struct Node *NeuerNode = malloc(sizeof(struct Node));		//Speicher reservieren fuer den neuen Knoten
 
 	if (NeuerNode == NULL)	//Falls kein Speicher freigegeben werden konnte
 	{
-		FehlerFunktion("Es konnte kein Speicher für die history reserviert werden.");
+		FehlerFunktion("Es konnte kein Speicher fuer die history reserviert werden.");
 		return;
 	}
 
@@ -52,8 +52,8 @@ void NeuesElement(char Input[INPUT_SIZE_MAX])
 		NeuerNode->Next = Anfang;
 		Anfang = NeuerNode;
 
-		/* Wir fügen einen neuen Knoten immer am Anfang der Liste ein, dies tun wir, da wir so eine möglichst einfache Struktur haben
-		und desweiteren nie einen Knoten woanders einfügen müssen (da wir diese doppelt verkettete Liste nur für history [n] brauchen) */
+		/* Wir fuegen einen neuen Knoten immer am Anfang der Liste ein, dies tun wir, da wir so eine moeglichst einfache Struktur haben
+		und desweiteren nie einen Knoten woanders einfuegen muessen (da wir diese doppelt verkettete Liste nur fuer history [n] brauchen) */
 	}
 
 	ListenAnzahl++;
@@ -65,7 +65,7 @@ void NeuesElement(char Input[INPUT_SIZE_MAX])
 	return;
 }
 
-void ListeLöschen()		// Wir müssen nie einzelne Knoten löschen, also reicht eine Funktion, die alle Knoten löscht, und somit ihren Speicherplatz wieder freizugeben
+void ListeLoeschen(void)		// Wir muessen nie einzelne Knoten loeschen, also reicht eine Funktion, die alle Knoten loescht, und somit ihren Speicherplatz wieder freizugeben
 {
 	struct Node *Hilfszeiger = Anfang;
 	while (Anfang != NULL)
@@ -80,7 +80,7 @@ void ListeLöschen()		// Wir müssen nie einzelne Knoten löschen, also reicht eine
 
 void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; History(0,1,n) = history n; Histroy(1,1,1000) Sichert die neusten 1000 Elemente
 {
-	if (Anfang == NULL)	//Sollte nie vorkommen, da zuminedest der Befehl history [n] immer ausgegeben werden müsste
+	if (Anfang == NULL)	//Sollte nie vorkommen, da zuminedest der Befehl history [n] immer ausgegeben werden muesste
 	{
 		FehlerFunktion("Die History ist leer");
 		return;
@@ -88,7 +88,7 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 
 	va_list ArgumentPointer;
 	int n = ListenAnzahl;		//Anzahl der Auszugeben Elemente wird hier gespeichert werden
-	if (parameterzahl)			//Wurden Argumente angegeben, müssen sie abgefragt werden 
+	if (parameterzahl)			//Wurden Argumente angegeben, muessen sie abgefragt werden 
 	{
 		va_start(ArgumentPointer, parameterzahl);
 		n = va_arg(ArgumentPointer, int);
@@ -100,11 +100,11 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 	}
 
 	struct Node *Hilfszeiger = Anfang;
-	int Zähler = 0;										//Ist verantwortlich für die ID in der History
-	FILE *HistoryFile = fopen(".hhush.histfile", "wb");	//Öffnet (und erstellt gegebenenfalls) die History-Datei
+	int Zaehler = 0;										//Ist verantwortlich fuer die ID in der History
+	FILE *HistoryFile = fopen(".hhush.histfile", "wb");		//oeffnet (und erstellt gegebenenfalls) die History-Datei
 	if ((HistoryFile == NULL) && (Sichern == 1))
 	{
-		FehlerFunktion("History-Datei konnte nicht zum schreiben geöffnet werden");
+		FehlerFunktion("History-Datei konnte nicht zum schreiben geoeffnet werden");
 		return;
 	}
 
@@ -114,41 +114,19 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 		Hilfszeiger = Hilfszeiger->Next;
 	}
 
-	for (; n > 0; n--)									//Gehe die Liste rückwärts bis zum Start durch
+	for (; n > 0; n--)									//Gehe die Liste rueckwaerts bis zum Start durch
 	{
 		if (Sichern == 0)
 		{
-			printf("%i %s", Zähler, Hilfszeiger);
+			printf("%i %s", Zaehler, Hilfszeiger);
 		}
 		else if (Sichern == 1)
 		{
 			fputs(Hilfszeiger->Eingabe, HistoryFile);
 		}
 		Hilfszeiger = Hilfszeiger->Prev;
-		Zähler++;
+		Zaehler++;
 	}
-
-	// Es folgt eine Implementierung für eine einfach verkettete Liste (erst später habe ich die Liste doppelt verkettet, 
-	// falls ein fallback nötig ist, steht dies noch hier)
-	//for (; n > 0; n--)
-	//{
-	//	int k;
-	//	Hilfszeiger = Anfang;
-	//	for (k = 1; k  < n; k++)
-	//	{
-	//		Hilfszeiger = Hilfszeiger->Next;
-	//	}
-	//	if (Sichern == 0)
-	//	{
-	//		printf("%i %s", Zähler, Hilfszeiger);
-	//	}
-	//	else if (Sichern == 1)
-	//	{
-	//		fputs(Hilfszeiger->Eingabe, HistoryFile);
-	//	}
-	//	Zähler++;
-	//}
-
 
 	fclose(HistoryFile);
 	return;
@@ -158,17 +136,17 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 *******Hier beginnt das Stufe-0-Input-Modul ******
 *************************************************/
 
-int InputStufe_0(char Input[INPUT_SIZE_MAX])		//gibt 0 zurück, falls die Eingabe nicht "leer" ist
+int InputStufe_0(char Input[INPUT_SIZE_MAX])		//gibt 0 zurueck, falls die Eingabe nicht "leer" ist
 {
-	int Zähler;
-	for (Zähler = 0; Input[Zähler] != '\n'; Zähler++)
+	int Zaehler;
+	for (Zaehler = 0; Input[Zaehler] != '\n'; Zaehler++)
 	{
-		if ((Input[Zähler] != '\t') && (Input[Zähler] != ' '))
+		if ((Input[Zaehler] != '\t') && (Input[Zaehler] != ' '))
 		{
 			return 0;
 		}
 
-		if (Zähler > INPUT_SIZE_MAX)
+		if (Zaehler > INPUT_SIZE_MAX)
 		{
 			FehlerFunktion("Eingabe zu lang");
 			return 1;
@@ -194,11 +172,11 @@ int StackTiefe;
 
 void Push(char Input[INPUT_SIZE_MAX])
 {
-	struct StackElement *NeuerNode = malloc(sizeof(struct StackElement));		//Speicher reservieren für das neue Stack Element
+	struct StackElement *NeuerNode = malloc(sizeof(struct StackElement));		//Speicher reservieren fuer das neue Stack Element
 
 	if (NeuerNode == NULL)	//Falls kein Speicher freigegeben werden konnte
 	{
-		FehlerFunktion("Es konnte kein Speicher für das StackElement reserviert werden.");
+		FehlerFunktion("Es konnte kein Speicher fuer das StackElement reserviert werden.");
 		return;
 	}
 
@@ -222,36 +200,36 @@ void Push(char Input[INPUT_SIZE_MAX])
 
 struct StackElement Pop(void)
 {
-	struct  StackElement Rückgabe;		//Wir kopieren das oberste Stackelement in Rückgabe
+	struct  StackElement Rueckgabe;		//Wir kopieren das oberste Stackelement in Rueckgabe
 
 	if (AnfangStack == NULL)	//Falls der Stack leer ist
 	{
 		FehlerFunktion("Input_1 Stack ist leer");
-		Rückgabe.Next = NULL;
+		Rueckgabe.Next = NULL;
 	}
 	else
 	{
-		memcpy(Rückgabe.InputText, AnfangStack->InputText, INPUT_SIZE_MAX * sizeof(char));
-		Rückgabe.Next = NULL;
+		memcpy(Rueckgabe.InputText, AnfangStack->InputText, INPUT_SIZE_MAX * sizeof(char));
+		Rueckgabe.Next = NULL;
 
-		struct StackElement *HilfsZeiger = AnfangStack->Next;	//Wir geben den Speicherplatz für das oberste Stackelement frei
+		struct StackElement *HilfsZeiger = AnfangStack->Next;	//Wir geben den Speicherplatz fuer das oberste Stackelement frei
 		free(AnfangStack);
 		AnfangStack = HilfsZeiger;
 
 		StackTiefe--;
 	}
-	
-	return Rückgabe;
+
+	return Rueckgabe;
 }
 
 void InputStufe_1(char Input[INPUT_SIZE_MAX])
 {
 	InputStufe_1Fehler = 0;
-	int InputLänge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLänge]='\n'
+	int InputLaenge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLaenge]='\n'
 
-	for (InputLänge = 0; Input[InputLänge] != '\n'; InputLänge++)
+	for (InputLaenge = 0; Input[InputLaenge] != '\n'; InputLaenge++)
 	{
-		if (InputLänge > INPUT_SIZE_MAX)		//Schaut ob die Eingabe zu lang ist
+		if (InputLaenge > INPUT_SIZE_MAX)		//Schaut ob die Eingabe zu lang ist
 		{
 			FehlerFunktion("Eingabe zu lang");
 			InputStufe_1Fehler = 1;
@@ -259,21 +237,21 @@ void InputStufe_1(char Input[INPUT_SIZE_MAX])
 		}
 	}
 
-	int Zähler;		//Zählt an welcher Stelle im String ein Pipe Symbol ist, von hinten an
-	for (Zähler= InputLänge; Input[Zähler] != '|'; Zähler--)
+	int Zaehler;		//Zaehlt an welcher Stelle im String ein Pipe Symbol ist, von hinten an
+	for (Zaehler = InputLaenge; Input[Zaehler] != '|'; Zaehler--)
 	{
-		if (Zähler < 0)
+		if (Zaehler < 0)
 		{
 			break;
 		}
 	}
 
-	if (Zähler == 0)
+	if (Zaehler == 0)
 	{
 		//Fehlerbehandlung falls Eingabe mit '|' beginnt
 	}
 
-	if (Zähler < 0)		//Wenn kein (weiteres) Pipe Symbol gefunden worden ist
+	if (Zaehler < 0)		//Wenn kein (weiteres) Pipe Symbol gefunden worden ist
 	{
 		Push(Input);
 		return;
@@ -281,17 +259,17 @@ void InputStufe_1(char Input[INPUT_SIZE_MAX])
 	else
 	{
 		char EinzelInput[INPUT_SIZE_MAX];			//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
-		int RestInputZähler = 0;		//Für die Numerierung des RestInputs
-		int HilfsZähler;
+		int RestInputZaehler = 0;		//Fuer die Numerierung des RestInputs
+		int HilfsZaehler;
 
-		for (HilfsZähler = Zähler + 1; HilfsZähler <= InputLänge; HilfsZähler++)		//Kopiert das Kommando hinter dem letzen Pipe Symbol in EinzelInput
+		for (HilfsZaehler = Zaehler + 1; HilfsZaehler <= InputLaenge; HilfsZaehler++)		//Kopiert das Kommando hinter dem letzen Pipe Symbol in EinzelInput
 		{
-			EinzelInput[RestInputZähler] = Input[HilfsZähler];
-			RestInputZähler++;
+			EinzelInput[RestInputZaehler] = Input[HilfsZaehler];
+			RestInputZaehler++;
 		}
-		EinzelInput[RestInputZähler] = '\0'; //Beendet den String des neusten Kommandos
-		Input[Zähler] = '\n';		//Das ehemals letze Pipes Symbol wird zu einer Newline, somit kürzen wir den String um den letzen Befehl
-		Input[Zähler+  1] = '\0';	//Den String beende wir noch mit \0
+		EinzelInput[RestInputZaehler] = '\0'; //Beendet den String des neusten Kommandos
+		Input[Zaehler] = '\n';		//Das ehemals letze Pipes Symbol wird zu einer Newline, somit kuerzen wir den String um den letzen Befehl
+		Input[Zaehler + 1] = '\0';	//Den String beende wir noch mit \0
 		Push(EinzelInput);
 		InputStufe_1(Input);
 		return;
@@ -302,17 +280,17 @@ void InputStufe_1(char Input[INPUT_SIZE_MAX])
 *******Hier beginnt das Stufe-2-Input-Modul ******
 *************************************************/
 
-void InputStufe_2(void)				//iteriert über dem Stufe-1-Stack und ersetzt alle Tabs durch Leerzeichen
+void InputStufe_2(void)				//iteriert ueber dem Stufe-1-Stack und ersetzt alle Tabs durch Leerzeichen
 {
 	struct StackElement *Hilfspointer = AnfangStack;
-	int Zähler;
-	while (Hilfspointer != NULL)	//diese While Konstuktion iteriert über dem Stufe-1-Stack
+	int Zaehler;
+	while (Hilfspointer != NULL)	//diese While Konstuktion iteriert ueber dem Stufe-1-Stack
 	{
-		for (Zähler = 0; Hilfspointer->InputText[Zähler] != '\n'; Zähler++)		//diese for-Schleife läuft über den Nutzerinput
+		for (Zaehler = 0; Hilfspointer->InputText[Zaehler] != '\n'; Zaehler++)		//diese for-Schleife laeuft ueber den Nutzerinput
 		{
-			if (Hilfspointer->InputText[Zähler] == '\t')
+			if (Hilfspointer->InputText[Zaehler] == '\t')
 			{
-				Hilfspointer->InputText[Zähler] = ' ';
+				Hilfspointer->InputText[Zaehler] = ' ';
 			}
 		}
 		Hilfspointer = Hilfspointer->Next;
@@ -324,52 +302,52 @@ void InputStufe_2(void)				//iteriert über dem Stufe-1-Stack und ersetzt alle Ta
 *******Hier beginnt das Stufe-3-Input-Modul ******
 *************************************************/
 
-void InputStufe_3(void)				//iteriert über dem Stufe-1-Stack und minimiert die Leerzeichen maximal
+void InputStufe_3(void)				//iteriert ueber dem Stufe-1-Stack und minimiert die Leerzeichen maximal
 {
 	struct StackElement *Hilfspointer = AnfangStack;
-	int Zähler;							//wird als Zähler für das Char Array verwendet, dass die bereinigte Nutzereingabe enthält
-	while (Hilfspointer != NULL)		//diese While Konstuktion iteriert über dem Stufe-1-Stack (wie bereits in Stufe-2)
+	int Zaehler;							//wird als Zaehler fuer das Char Array verwendet, dass die bereinigte Nutzereingabe enthaelt
+	while (Hilfspointer != NULL)		//diese While Konstuktion iteriert ueber dem Stufe-1-Stack (wie bereits in Stufe-2)
 	{
 		if (Hilfspointer->InputText[0] == ' ')		//Wenn die Eingabe mit einem Leerzeichen beginnt
 		{
-			for (Zähler = 0; Hilfspointer->InputText[Zähler] != '\n'; Zähler ++)
+			for (Zaehler = 0; Hilfspointer->InputText[Zaehler] != '\n'; Zaehler++)
 			{
-				if (Zähler == INPUT_SIZE_MAX-1)				//Ausnahmesituation bei sehr langen Eingaben (kann dies überhaupt eintreten?)
+				if (Zaehler == INPUT_SIZE_MAX - 1)				//Ausnahmesituation bei sehr langen Eingaben (kann dies ueberhaupt eintreten?)
 				{
-					Hilfspointer->InputText[Zähler] = '\0';
+					Hilfspointer->InputText[Zaehler] = '\0';
 					break;
 				}
-				Hilfspointer->InputText[Zähler] = Hilfspointer->InputText[Zähler + 1];	//verschiebe die komplette Eingabe "eins nach vorne" (auf Pos. 0 war ein Leerzeichen)
+				Hilfspointer->InputText[Zaehler] = Hilfspointer->InputText[Zaehler + 1];	//verschiebe die komplette Eingabe "eins nach vorne" (auf Pos. 0 war ein Leerzeichen)
 			}
 			continue;		//Starte von Vorne, falls auch auf Position 1 ein Leerzeichen war
 		}
 
-		for (Zähler = 0; Hilfspointer->InputText[Zähler] != '\n'; Zähler++)	//hier wird über den Nutzerinput gelaufen, desweiteren ist das erste Zeichen kein Leerzeichen
+		for (Zaehler = 0; Hilfspointer->InputText[Zaehler] != '\n'; Zaehler++)	//hier wird ueber den Nutzerinput gelaufen, desweiteren ist das erste Zeichen kein Leerzeichen
 		{
 			/* Wir wollen wenn mehrere Leerzeichen hintereinander stehen diese auf ein einzelnes Leerzeichen als Trenner von Eingaben reduzieren.
 			Dazu schauen wir, ob hinter einem Leerzeichen ein weiteres steht und falls dies der Fall ist, verschieben wir alles (mitsammt des zweiten Leerzeichens)
-			um eins nach vorne und überschreiben so das erste mit dem Zweiten Leerzeichen. Wenn wir dies gemacht haben, wiederholen wir diesen Schritt auf dieser
-			Position (deshalb Zähler--; ), bis dort keine zwei Leerzeichen mehr hintereinander stehen. */
-			if (Hilfspointer->InputText[Zähler] == ' ' && Hilfspointer->InputText[Zähler + 1] == ' ')
+			um eins nach vorne und ueberschreiben so das erste mit dem Zweiten Leerzeichen. Wenn wir dies gemacht haben, wiederholen wir diesen Schritt auf dieser
+			Position (deshalb Zaehler--; ), bis dort keine zwei Leerzeichen mehr hintereinander stehen. */
+			if (Hilfspointer->InputText[Zaehler] == ' ' && Hilfspointer->InputText[Zaehler + 1] == ' ')
 			{
-				int HilfsZähler = Zähler;
-				for (; Hilfspointer->InputText[HilfsZähler] != '\n'; HilfsZähler++)
+				int HilfsZaehler = Zaehler;
+				for (; Hilfspointer->InputText[HilfsZaehler] != '\n'; HilfsZaehler++)
 				{
-					if (HilfsZähler == INPUT_SIZE_MAX - 1)				//Ausnahmesituation bei sehr langen Eingaben
+					if (HilfsZaehler == INPUT_SIZE_MAX - 1)				//Ausnahmesituation bei sehr langen Eingaben
 					{
-						Hilfspointer->InputText[HilfsZähler] = '\0';
+						Hilfspointer->InputText[HilfsZaehler] = '\0';
 						break;
 					}
-					Hilfspointer->InputText[HilfsZähler] = Hilfspointer->InputText[HilfsZähler + 1];		//verschiebe alles "eins nach vorne"
-					Zähler--;
+					Hilfspointer->InputText[HilfsZaehler] = Hilfspointer->InputText[HilfsZaehler + 1];		//verschiebe alles "eins nach vorne"
+					Zaehler--;
 				}
 			}
 		}
 
-		if (Hilfspointer->InputText[Zähler-1] == ' ')	//falls direkt vor dem \n noch ein Leerzeichen ist
+		if (Hilfspointer->InputText[Zaehler - 1] == ' ')	//falls direkt vor dem \n noch ein Leerzeichen ist
 		{
-			Hilfspointer->InputText[Zähler - 1] = '\n';
-			Hilfspointer->InputText[Zähler] = '\0';
+			Hilfspointer->InputText[Zaehler - 1] = '\n';
+			Hilfspointer->InputText[Zaehler] = '\0';
 		}
 
 		Hilfspointer = Hilfspointer->Next;
@@ -388,19 +366,19 @@ struct BefehlsListe
 };
 
 struct BefehlsListe *BefehlsListenAnfang = NULL;
-int BefehlAnzahl;		//Speichert wie viele Argumente übergeben wurden (der Befehl mitgezählt; gut zum Vergleich, ob falsche menge an Argumenten eingegeben wurde)
+int BefehlAnzahl;		//Speichert wie viele Argumente uebergeben wurden (der Befehl mitgezaehlt; gut zum Vergleich, ob falsche menge an Argumenten eingegeben wurde)
 
 /* Die Folgende Funktion InputStufe_4 ist eingentlich nur eine abgespeckte Kopie von InputStufe_1 (und NeuerBefehl() ist eigentlich Push(),
-bzw. Pop() ist GetBefehl()), nur dass hier nicht bei Pipe Symbolen '|' sondern be Leerzeichen getrennt wird. Es spart mir nur sehr viel Arbeit, 
+bzw. Pop() ist GetBefehl()), nur dass hier nicht bei Pipe Symbolen '|' sondern be Leerzeichen getrennt wird. Es spart mir nur sehr viel Arbeit,
 ein zweite Funktion zu schreiben, die quasi dasselbe tut, nur mit einem anderen Char. */
 
 void NeuerBefehl(char Input[INPUT_SIZE_MAX])
 {
-	struct BefehlsListe *NeuerBefehl = malloc(sizeof(struct BefehlsListe));		//Speicher reservieren für das neuen Befehl
+	struct BefehlsListe *NeuerBefehl = malloc(sizeof(struct BefehlsListe));		//Speicher reservieren fuer das neuen Befehl
 
 	if (NeuerBefehl == NULL)	//Falls kein Speicher freigegeben werden konnte
 	{
-		FehlerFunktion("Es konnte kein Speicher für den Befehl reserviert werden.");
+		FehlerFunktion("Es konnte kein Speicher fuer den Befehl reserviert werden.");
 		return;
 	}
 
@@ -423,41 +401,41 @@ void NeuerBefehl(char Input[INPUT_SIZE_MAX])
 
 void InputStufe_4(char Input[INPUT_SIZE_MAX])
 {
-	int InputLänge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLänge]='\n'
+	int InputLaenge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLaenge]='\n'
 
-	for (InputLänge = 0; Input[InputLänge] != '\n'; InputLänge++)
+	for (InputLaenge = 0; Input[InputLaenge] != '\n'; InputLaenge++)
 	{
-		//Zählt wie lange die Nutzereingabe ist
+		//Zaehlt wie lange die Nutzereingabe ist
 	}
 
-	int Zähler;		//Zählt an welcher Stelle im String ein Leerzeichen ist, von hinten an
-	for (Zähler = InputLänge; Input[Zähler] != ' '; Zähler--)
+	int Zaehler;		//Zaehlt an welcher Stelle im String ein Leerzeichen ist, von hinten an
+	for (Zaehler = InputLaenge; Input[Zaehler] != ' '; Zaehler--)
 	{
-		if (Zähler < 0)
+		if (Zaehler < 0)
 		{
 			break;
 		}
 	}
 
-	if (Zähler < 0)		//Wenn kein (weiteres) Leerzeichen gefunden worden ist
+	if (Zaehler < 0)		//Wenn kein (weiteres) Leerzeichen gefunden worden ist
 	{
-		Input[InputLänge] = '\0';
+		Input[InputLaenge] = '\0';
 		NeuerBefehl(Input);
 		return;
 	}
 	else
 	{
 		char EinzelInput[INPUT_SIZE_MAX];			//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
-		int RestInputZähler = 0;		//Für die Numerierung des RestInputs
-		int HilfsZähler;
+		int RestInputZaehler = 0;		//Fuer die Numerierung des RestInputs
+		int HilfsZaehler;
 
-		for (HilfsZähler = Zähler + 1; HilfsZähler <= InputLänge; HilfsZähler++)		//Kopiert das Kommando hinter dem letzen Pipe Symbol in EinzelInput
+		for (HilfsZaehler = Zaehler + 1; HilfsZaehler <= InputLaenge; HilfsZaehler++)		//Kopiert das Kommando hinter dem letzen Pipe Symbol in EinzelInput
 		{
-			EinzelInput[RestInputZähler] = Input[HilfsZähler];
-			RestInputZähler++;
+			EinzelInput[RestInputZaehler] = Input[HilfsZaehler];
+			RestInputZaehler++;
 		}
-		EinzelInput[RestInputZähler-1] = '\0'; //Beendet den String des neusten Kommandos
-		Input[Zähler] = '\0';		//Das ehemalige Leerzeichen wird zu '\0'
+		EinzelInput[RestInputZaehler - 1] = '\0'; //Beendet den String des neusten Kommandos
+		Input[Zaehler] = '\0';		//Das ehemalige Leerzeichen wird zu '\0'
 		NeuerBefehl(EinzelInput);
 		InputStufe_4(Input);
 		return;
@@ -466,27 +444,27 @@ void InputStufe_4(char Input[INPUT_SIZE_MAX])
 
 struct BefehlsListe GetBefehl(void)
 {
-	struct  BefehlsListe Rückgabe;		//Wir kopieren das oberste Stackelement in Rückgabe
+	struct  BefehlsListe Rueckgabe;		//Wir kopieren das oberste Stackelement in Rueckgabe
 
 	if (BefehlsListenAnfang == NULL)	//Falls die Befehlsliste leer ist
 	{
 		FehlerFunktion("Befehlsliste ist leer");
-		Rückgabe.Next = NULL;
-		return Rückgabe;
+		Rueckgabe.Next = NULL;
+		return Rueckgabe;
 	}
 
-	memcpy(Rückgabe.Befehl, BefehlsListenAnfang->Befehl, INPUT_SIZE_MAX * sizeof(char));
-	Rückgabe.Next = NULL;			//aus Sicherheit
+	memcpy(Rueckgabe.Befehl, BefehlsListenAnfang->Befehl, INPUT_SIZE_MAX * sizeof(char));
+	Rueckgabe.Next = NULL;			//aus Sicherheit
 
 
-	struct BefehlsListe *HilfsZeiger = BefehlsListenAnfang->Next;	//Wir geben den Speicherplatz für das oberste Stackelement frei
+	struct BefehlsListe *HilfsZeiger = BefehlsListenAnfang->Next;	//Wir geben den Speicherplatz fuer das oberste Stackelement frei
 	free(BefehlsListenAnfang);
 	BefehlsListenAnfang = HilfsZeiger;
 	BefehlAnzahl--;
-	return Rückgabe;
+	return Rueckgabe;
 }
 
-void BefehlsListeReset(void)		//wir löschen die komplette Befehlsliste und geben ihren Speicherplatz wieder frei (bei ungültigen Funktionsaufrufen eingesetzt)
+void BefehlsListeReset(void)		//wir loeschen die komplette Befehlsliste und geben ihren Speicherplatz wieder frei (bei ungueltigen Funktionsaufrufen eingesetzt)
 {
 	while (BefehlsListenAnfang != NULL)
 	{
@@ -540,14 +518,14 @@ void FunktionsAufrufer()
 {
 	switch (BefehlInterpreter())
 	{
-		case 0: /* EXIT */; break;
-		case 1: /* DATE */; break;
-		case 2: /* History */; break;
-		case 3: /* echo */; break;
-		case 4: /* ls */; break;
-		case 5: /* cd */; break;
-		case 6: /* grep */; break;
-		default: /* no such program */
+	case 0: /* EXIT */; break;
+	case 1: /* DATE */; break;
+	case 2: /* History */; break;
+	case 3: /* echo */; break;
+	case 4: /* ls */; break;
+	case 5: /* cd */; break;
+	case 6: /* grep */; break;
+	default: /* no such program */
 		break;
 	}
 }
@@ -560,8 +538,8 @@ int main(void)
 	*******Hier wird die History importiert******
 	********************************************/
 
-	FILE *HistoryFile = fopen(".hhush.histfile", "rb");	//Öffnet die History-Datei
-	if (HistoryFile != NULL)	//Falls die History-Datei nicht geöffnet werden konnte (im Regelfall also noch nicht erstellt wurde), wird nichts importiert
+	FILE *HistoryFile = fopen(".hhush.histfile", "rb");	//oeffnet die History-Datei
+	if (HistoryFile != NULL)	//Falls die History-Datei nicht geoeffnet werden konnte (im Regelfall also noch nicht erstellt wurde), wird nichts importiert
 	{
 		char ImportBuffer[INPUT_SIZE_MAX];
 		char *ImportPointer = fgets(ImportBuffer, INPUT_SIZE_MAX, HistoryFile);
@@ -576,71 +554,45 @@ int main(void)
 	/*******************************************
 	*******Hier beginnt das Input-Modul ******
 	********************************************/
-		char Input[INPUT_SIZE_MAX];	//Wird zur Speicherung der Nutzereingabe verwendet
+	char Input[INPUT_SIZE_MAX];	//Wird zur Speicherung der Nutzereingabe verwendet
 
 
 
 
-		while (1)
+	while (1)
+	{
+		fgets(Input, sizeof(Input), stdin);
+		if (InputStufe_0(Input))	//falls nur Leerzeichen/Tabs eingegeben wurden, wird neu angefangen
 		{
-			fgets(Input, sizeof(Input), stdin);
-			if (InputStufe_0(Input))	//falls nur Leerzeichen/Tabs eingegeben wurden, wird neu angefangen
-			{
-				continue;
-			}
-			InputStufe_1(Input);
-			if (InputStufe_1Fehler == 1)
-			{
-				//Fehlerbehandlung
-				continue;
-			}
-			NeuesElement(Input);		//speichert die Eingabe in der History; wird erst hier gemacht, da erst in Stufe 1 auf länge überprüft wird
-			InputStufe_2();				//ersetzt alle Tabs in der Eingabe durch Leerzeichen
-			InputStufe_3();				//löscht alle Leerzeichen, die keine Eingabe trennen
-
-			while (StackTiefe > 0)		//diese Schleife führt hintereinander die durch '|' getrennten Befehle aus
-			{
-				InputStufe_4(Pop().InputText);
-				FunktionsAufrufer();
-
-				if (BefehlAnzahl > 0)
-				{
-					FehlerFunktion("BefehlsListe nicht leer");
-					BefehlsListeReset();
-				}
-			}
-
-
-			//Bis hier steht "fertiger" Code
-
-
-			//TODO ALLE Outputs werden zwischengespeichert, erst nach dem durchlaufen der while (StackTiefe > 0) Schleife ausgegeben
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+			continue;
 		}
-	
-	
+		InputStufe_1(Input);
+		if (InputStufe_1Fehler == 1)
+		{
+			//Fehlerbehandlung
+			continue;
+		}
+		NeuesElement(Input);		//speichert die Eingabe in der History; wird erst hier gemacht, da erst in Stufe 1 auf laenge ueberprueft wird
+		InputStufe_2();				//ersetzt alle Tabs in der Eingabe durch Leerzeichen
+		InputStufe_3();				//loescht alle Leerzeichen, die keine Eingabe trennen
 
-	
+		while (StackTiefe > 0)		//diese Schleife fuehrt hintereinander die durch '|' getrennten Befehle aus
+		{
+			InputStufe_4(Pop().InputText);
+			FunktionsAufrufer();
+
+			if (BefehlAnzahl > 0)
+			{
+				FehlerFunktion("BefehlsListe nicht leer");
+				BefehlsListeReset();
+			}
+		}
+
+
+		//Bis hier steht "fertiger" Code
+
+
+		//TODO ALLE Outputs werden zwischengespeichert, erst nach dem durchlaufen der while (StackTiefe > 0) Schleife ausgegeben
 
 
 
@@ -652,7 +604,33 @@ int main(void)
 
 
 
-		History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
-		ListeLöschen();					//Um Speicherplatz freizugeben
-		return 0;
+
+
+
+
+
+
+
+
+
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
+	ListeLoeschen();					//Um Speicherplatz freizugeben
+	return 0;
 }
