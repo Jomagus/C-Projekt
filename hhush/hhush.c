@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS	
 /* Da Visual Studio z.B. strncpy als unsicher ansieht (und strncpy_s haben moechte, da bei strncpy ein Buffer Overflow auftreten kann),
-was aber zu problemen mit gcc fuehren kann. Gleiches gilt für fopen (statt fopen_s); Der Befehl ignoriert das Funktionen "unsicher" sind beim 
+was aber zu problemen mit gcc fuehren kann. Gleiches gilt fuer fopen (statt fopen_s); Der Befehl ignoriert das Funktionen "unsicher" sind beim 
 kompilieren in Visual Studio (sonst wuerde das kompilieren gar nicht erst funktionieren, sondern nur zu einer Fehlermeldung fuehren) */
 
 #include <stdio.h>		//fuer z.B. fgets und generell die Ein/Ausgabe
@@ -16,7 +16,7 @@ void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
 	return;
 }
 
-int PipeFehler = 0;		//wird auf 1 gesetzt, bei ungültigem Kommando; auf 2 bei ungültigen Argumenten
+int PipeFehler = 0;		//wird auf 1 gesetzt, bei ungueltigem Kommando; auf 2 bei ungueltigen Argumenten
 
 
 /*******************************************
@@ -483,13 +483,13 @@ void BefehlsListeReset(void)		//wir loeschen die komplette Befehlsliste und gebe
 *******Hier beginnt der Pipe-Buffer *************
 *************************************************/
 
-/* Der Pipe-Buffer ist ein Char-Array beliebiger größe, für das dynamisch Speicher reserviert wird.
+/* Der Pipe-Buffer ist ein Char-Array beliebiger groeße, fuer das dynamisch Speicher reserviert wird.
 Die beliebig große Ausgabe eines Unterprogramms kann so zwischengespeichert werden, falls Piping
 verwendet wird. */
 
 char *GlobalPipeBufferPointer = NULL;
 
-void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zugewiesenen Speicherbereich und gibt einen Pointer darauf zurück
+void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zugewiesenen Speicherbereich und gibt einen Pointer darauf zurueck
 {
 	if (GlobalPipeBufferPointer != NULL)
 	{
@@ -497,10 +497,10 @@ void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zug
 		return;
 	}
 	int InputLeange = strlen(Input);			//schaut wie lang der Input ist
-	char *ReturnPointer = malloc((InputLeange + 1)* sizeof(char));		//reserviert Speicher für die Eingabe + '\0'
+	char *ReturnPointer = malloc((InputLeange + 1)* sizeof(char));		//reserviert Speicher fuer die Eingabe + '\0'
 	if (ReturnPointer == NULL)
 	{
-		FehlerFunktion("Es konnte kein Speicher für den PipeBuffer zugewiesen werden");
+		FehlerFunktion("Es konnte kein Speicher fuer den PipeBuffer zugewiesen werden");
 		return;
 	}
 	memcpy(ReturnPointer, Input, (InputLeange + 1)* sizeof(char));
@@ -508,7 +508,7 @@ void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zug
 	return;
 }
 
-void WipePipeBuffer(void)						//löscht den PipeBufferPointer
+void WipePipeBuffer(void)						//loescht den PipeBufferPointer
 {
 	if (GlobalPipeBufferPointer == NULL)
 	{
@@ -654,19 +654,20 @@ int main(void)
 
 			//ab hier beginnt Fehlerbehandlung
 
-			if (PipeFehler != 0)	//die Pipe wird nicht weiter ausgeführt, wenn ein Unterprogramm fehlschlägt
+			if (PipeFehler != 0)	//die Pipe wird nicht weiter ausgefuehrt, wenn ein Unterprogramm fehlschlaegt
 			{
-				while (StackTiefe > 0)	//lösche den Stack mit den weiteren gepipten Befehlen
+				while (StackTiefe > 0)	//loesche den Stack mit den weiteren gepipten Befehlen
 				{
 					Pop();
 				}
-				BefehlsListeReset();	//lösche die Befehlsliste
-				if (GlobalPipeBufferPointer != NULL)		//falls nicht leer, wird der PipeBuffer gelöscht
+				BefehlsListeReset();	//loesche die Befehlsliste
+				if (GlobalPipeBufferPointer != NULL)		//falls nicht leer, wird der PipeBuffer geloescht
 				{
 					WipePipeBuffer();
 				}
 				if (PipeFehler == 1)
 				{
+					ExitVariable = 1;						//Bsp.: "exit | daate" wuerde immernoch exit ausfuehren, wenn diese Line nicht waere
 					WritePipeBuffer("command not found\n");
 				}
 				if (PipeFehler == 2)
@@ -677,9 +678,7 @@ int main(void)
 				break;
 			}
 		}
-
-
-
+		
 		if (GlobalPipeBufferPointer != NULL)	//gibt den PipeBuffer aus, nachdem alle Kommandos durchlaufen worden sind
 		{
 			printf(GlobalPipeBufferPointer);
@@ -688,47 +687,11 @@ int main(void)
 
 
 		//Bis hier steht "fertiger" Code
-
-
-		//TODO ALLE Outputs werden zwischengespeichert, erst nach dem durchlaufen der while (StackTiefe > 0) Schleife ausgegeben
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		//Platz fuer Debugcode
 
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
-	ListeLoeschen();					//Um Speicherplatz freizugeben
+	ListeLoeschen();				//Um Speicherplatz freizugeben
 	return 0;
 }
