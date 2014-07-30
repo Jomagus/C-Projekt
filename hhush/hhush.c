@@ -16,7 +16,7 @@ void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
 	return;
 }
 
-int PipeFehler = 0;		//wird auf 1 gesetzt, falls die ausführung eines Unterprogramms in der Pipeline fehlschlägt
+int PipeFehler = 0;		//wird auf 1 gesetzt, bei ungültigem Kommando; auf 2 bei ungültigen Argumenten
 
 
 /*******************************************
@@ -528,9 +528,7 @@ void FunktionsAufrufer()
 	case 4: /* ls */; break;
 	case 5: /* cd */; break;
 	case 6: /* grep */; break;
-	default: PipeFehler = 1;
-		/* no such program */
-		break;
+	default: PipeFehler = 1; break;
 	}
 }
 
@@ -645,28 +643,33 @@ int main(void)
 				FehlerFunktion("BefehlsListe nicht leer");
 				BefehlsListeReset();
 			}
-			if (PipeFehler == 1)	//die Pipe wird nicht weiter ausgeführt, wenn ein Unterprogramm fehlschlägt
+			if (PipeFehler != 0)	//die Pipe wird nicht weiter ausgeführt, wenn ein Unterprogramm fehlschlägt
 			{
 				while (StackTiefe > 0)	//lösche den Stack mit den weiteren gepipten Befehlen
 				{
 					Pop();
 				}
 				BefehlsListeReset();	//lösche die Befehlsliste
+				if (GlobalPipeBufferPointer != NULL)		//falls nicht leer, wird der PipeBuffer gelöscht
+				{
+					WipePipeBuffer();
+				}
+				if (PipeFehler == 1)
+				{
+					WritePipeBuffer("command not found\n");
+				}
+				else if (PipeFehler == 2)
+				{
+					WritePipeBuffer("invalid arguments\n");
+				}
 				PipeFehler = 0;
 				break;
 			}
 		}
 
-		if (PipeFehler == 1)		//falls ein Fehler in der Pipe auftrat, wird der PipeBuffer gelöscht
-		{
-			if (GlobalPipeBufferPointer != NULL)
-			{
-				WipePipeBuffer();
-			}
-			continue;
-		}
 
-		if (GlobalPipeBufferPointer != NULL)
+
+		if (GlobalPipeBufferPointer != NULL)	//gibt den PipeBuffer aus, nachdem alle Kommandos durchlaufen worden sind
 		{
 			printf(GlobalPipeBufferPointer);
 			WipePipeBuffer();
