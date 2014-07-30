@@ -480,6 +480,73 @@ void BefehlsListeReset(void)		//wir loeschen die komplette Befehlsliste und gebe
 }
 
 /*************************************************
+*******Hier beginnt der Pipe-Buffer *************
+*************************************************/
+
+/* Der Pipe-Buffer ist ein Char-Array beliebiger größe, für das dynamisch Speicher reserviert wird.
+Die beliebig große Ausgabe eines Unterprogramms kann so zwischengespeichert werden, falls Piping
+verwendet wird. */
+
+char *GlobalPipeBufferPointer = NULL;
+
+void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zugewiesenen Speicherbereich und gibt einen Pointer darauf zurück
+{
+	if (GlobalPipeBufferPointer != NULL)
+	{
+		FehlerFunktion("PipeBuffer ist noch nicht leer");
+		return;
+	}
+	int InputLeange = strlen(Input);			//schaut wie lang der Input ist
+	char *ReturnPointer = malloc((InputLeange + 1)* sizeof(char));		//reserviert Speicher für die Eingabe + '\0'
+	if (ReturnPointer == NULL)
+	{
+		FehlerFunktion("Es konnte kein Speicher für den PipeBuffer zugewiesen werden");
+		return;
+	}
+	memcpy(ReturnPointer, Input, (InputLeange + 1)* sizeof(char));
+	GlobalPipeBufferPointer = ReturnPointer;
+	return;
+}
+
+void WipePipeBuffer(void)						//löscht den PipeBufferPointer
+{
+	if (GlobalPipeBufferPointer == NULL)
+	{
+		FehlerFunktion("PipeBuffer ist schon leer");
+		return;
+	}
+	free(GlobalPipeBufferPointer);
+	GlobalPipeBufferPointer = NULL;
+	return;
+}
+
+/*************************************************
+*******Hier beginnt das Exit-Programm ************
+*************************************************/
+
+int ExitVariable = 1;		//wird auf 0 gesetzt, wenn das Programm verlassen werden soll
+
+void ExitProgramm(void)
+{
+	if (BefehlAnzahl == 0)	//darf nur ohne Argumente verwendet werden
+	{
+		ExitVariable = 0;
+		return;
+	}
+	else
+	{
+		PipeFehler = 2;
+		return;
+	}
+}
+
+
+
+
+
+
+
+/*************************************************
 *******Hier beginnt der Befehl-Interpreter ******
 *************************************************/
 
@@ -521,7 +588,7 @@ void FunktionsAufrufer()
 {
 	switch (BefehlInterpreter())
 	{
-	case 0: /* EXIT */; break;
+	case 0: ExitProgramm(); break;
 	case 1: /* DATE */; break;
 	case 2: /* History */; break;
 	case 3: /* echo */; break;
@@ -533,61 +600,8 @@ void FunktionsAufrufer()
 }
 
 /*************************************************
-*******Hier beginnt der Pipe-Buffer *************
+*******Hier beginnt das Haupt-Programm  **********
 *************************************************/
-
-/* Der Pipe-Buffer ist ein Char-Array beliebiger größe, für das dynamisch Speicher reserviert wird.
-Die beliebig große Ausgabe eines Unterprogramms kann so zwischengespeichert werden, falls Piping
-verwendet wird. */
-
-char *GlobalPipeBufferPointer = NULL;
-
-void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zugewiesenen Speicherbereich und gibt einen Pointer darauf zurück
-{
-	if (GlobalPipeBufferPointer != NULL)
-	{
-		FehlerFunktion("PipeBuffer ist noch nicht leer");
-		return;
-	}
-	int InputLeange = strlen(Input);			//schaut wie lang der Input ist
-	char *ReturnPointer = malloc((InputLeange + 1)* sizeof(char));		//reserviert Speicher für die Eingabe + '\0'
-	if (ReturnPointer == NULL)
-	{
-		FehlerFunktion("Es konnte kein Speicher für den PipeBuffer zugewiesen werden");
-		return;
-	}
-	memcpy(ReturnPointer, Input, (InputLeange + 1)* sizeof(char));
-	GlobalPipeBufferPointer = ReturnPointer;
-	return;
-}
-
-void WipePipeBuffer(void)						//löscht den PipeBufferPointer
-{
-	if (GlobalPipeBufferPointer == NULL)
-	{
-		FehlerFunktion("PipeBuffer ist schon leer");
-		return;
-	}
-	free(GlobalPipeBufferPointer);
-	GlobalPipeBufferPointer = NULL;
-	return;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 int main(void)
 {
@@ -616,7 +630,7 @@ int main(void)
 
 
 
-	while (1)
+	while (ExitVariable)
 	{
 		fgets(Input, sizeof(Input), stdin);
 		if (InputStufe_0(Input))	//falls nur Leerzeichen/Tabs eingegeben wurden, wird neu angefangen
@@ -638,11 +652,8 @@ int main(void)
 			InputStufe_4(Pop().InputText);
 			FunktionsAufrufer();
 
-			if (BefehlAnzahl > 0)
-			{
-				FehlerFunktion("BefehlsListe nicht leer");
-				BefehlsListeReset();
-			}
+			//ab hier beginnt Fehlerbehandlung
+
 			if (PipeFehler != 0)	//die Pipe wird nicht weiter ausgeführt, wenn ein Unterprogramm fehlschlägt
 			{
 				while (StackTiefe > 0)	//lösche den Stack mit den weiteren gepipten Befehlen
@@ -658,7 +669,7 @@ int main(void)
 				{
 					WritePipeBuffer("command not found\n");
 				}
-				else if (PipeFehler == 2)
+				if (PipeFehler == 2)
 				{
 					WritePipeBuffer("invalid arguments\n");
 				}
