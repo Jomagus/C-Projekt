@@ -6,7 +6,6 @@ kompilieren in Visual Studio (sonst wuerde das kompilieren gar nicht erst funkti
 #include <stdio.h>		//fuer z.B. fgets und generell die Ein/Ausgabe
 #include <stdlib.h>		//z.B. fuer NULL, malloc() und free()
 #include <string.h>		//fuer memcpy
-#include <stdarg.h>		//fuer variable Parameteranzahl
 #include <time.h>		//fuer das date-Programm
 
 #define INPUT_SIZE_MAX 256		//falls spaeter laengere Inputs bearbeitet werden sollen
@@ -82,7 +81,7 @@ void ListeLoeschen(void)		// Wir muessen nie einzelne Knoten loeschen, also reic
 	return;
 }
 
-void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; History(0,1,n) = history n; Histroy(1,1,1000) Sichert die neusten 1000 Elemente
+void History(int Sichern, int Parameterzahl, int AusgabeWunsch)		//History(0,0,0) = history; History(0,1,n) = history n; Histroy(1,1,1000) Sichert die neusten 1000 Elemente
 {
 	if (Anfang == NULL)	//Sollte nie vorkommen, da zuminedest der Befehl history [n] immer ausgegeben werden muesste
 	{
@@ -90,13 +89,15 @@ void History(int Sichern, int parameterzahl, ...)		//History(0,0) = history; His
 		return;
 	}
 
-	va_list ArgumentPointer;
 	int n = ListenAnzahl;		//Anzahl der Auszugeben Elemente wird hier gespeichert werden
-	if (parameterzahl)			//Wurden Argumente angegeben, muessen sie abgefragt werden 
+	if (Parameterzahl)			//Wurden Argumente angegeben, muessen sie abgefragt werden 
 	{
-		va_start(ArgumentPointer, parameterzahl);
-		n = va_arg(ArgumentPointer, int);
-		va_end(ArgumentPointer);
+		n = AusgabeWunsch;
+		if (n < 0)
+		{
+			PipeFehler = 2;
+			return;
+		}
 		if (n > ListenAnzahl)
 		{
 			n = ListenAnzahl;
@@ -561,6 +562,90 @@ void DateProgramm(void)
 	}
 }
 
+/*************************************************
+*******Hier beginnt das Echo-Programm ************
+*************************************************/
+
+/* Die Aufgabenstellung fordert nicht, dass man die Ausgabe beliebiger Programme als eingabe für echo implementieren soll.
+Deshalb habe ich es auch nicht getan, und wenn ein gepipetes Programm eine Ausgabe macht, wird ein darauffolgender echo-Befehl
+immer fehlschlagen. */
+
+void EchoProgramm(void)
+{
+	if (GlobalPipeBufferPointer == NULL)	//schaut, dass kein vorheriges Programm eine Ausgabe machte
+	{
+		if (BefehlAnzahl == 0)				//falls keine Argumente uebergeben worden sind
+		{
+			WritePipeBuffer("\n\0");
+		}
+
+		char ZwischenSpeicher[INPUT_SIZE_MAX];		//da eine Eingabe maximal 256 Zeichen lang ist, wird die Ausgabe des Echo Befehls nie laenger als dies sein (eig. noch -5 Zeichen für "echo ")
+		int ZaehlerEins = 0;						//wird zum Zeahlen den Zwischenspeichers verwendet
+		int ZaehlerZwei = 0;						//wird auch dazu verwendet
+		while (BefehlAnzahl > 0)
+		{
+			ZaehlerEins = 0;
+			struct BefehlsListe NeuesArgument = GetBefehl();
+			while (ZaehlerEins < strlen(NeuesArgument.Befehl))
+			{
+				ZwischenSpeicher[ZaehlerEins+ZaehlerZwei] = NeuesArgument.Befehl[ZaehlerEins];
+				ZaehlerEins++;
+			}
+			ZaehlerZwei = ZaehlerEins + ZaehlerZwei;
+			ZwischenSpeicher[ZaehlerZwei] = ' ';
+			ZaehlerZwei++;
+		}
+		ZwischenSpeicher[ZaehlerZwei] = '\n';
+		ZwischenSpeicher[ZaehlerZwei + 1] = '\0';
+		WritePipeBuffer(ZwischenSpeicher);
+		return;
+	}
+	else
+	{
+		PipeFehler = 2;
+		return;
+	}
+}
+
+/*************************************************
+*******Hier beginnt das History-Programm *********
+*************************************************/
+
+void HistoryProgramm(void)
+{
+	if (BefehlAnzahl > 1)	//es darf maximal 1 Arument uebergeben werden
+	{
+		PipeFehler = 2;
+		return;
+	}
+	else if (BefehlAnzahl == 1)
+	{
+		struct BefehlsListe NeuesArgument = GetBefehl();
+		if (strcmp(NeuesArgument.Befehl, "-c") == 0)		//schaut ob die history gelöscht werden sollte
+		{
+			ListeLoeschen();
+			return;
+		}
+		int n = atoi(NeuesArgument.Befehl);			//wandelt den String in eine Ganzzahl um
+		if (n == 0)									//atoi gibt 0 zurueck, wenn die umwandlung fehlschlaegt
+		{
+			PipeFehler = 2;
+			return;
+		}
+		History(0, 1, n);
+		return;
+	}
+	else
+	{
+		History(0, 0, 0);
+		return;
+	}
+}
+
+
+
+
+
 
 
 /*************************************************
@@ -607,8 +692,8 @@ void FunktionsAufrufer()
 	{
 	case 0: ExitProgramm(); break;
 	case 1: DateProgramm(); break;
-	case 2: /* History */; break;
-	case 3: /* echo */; break;
+	case 2: HistoryProgramm(); break;
+	case 3: EchoProgramm(); break;
 	case 4: /* ls */; break;
 	case 5: /* cd */; break;
 	case 6: /* grep */; break;
