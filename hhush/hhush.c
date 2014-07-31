@@ -8,6 +8,12 @@ kompilieren in Visual Studio (sonst wuerde das kompilieren gar nicht erst funkti
 #include <string.h>		//fuer memcpy
 #include <time.h>		//fuer das date-Programm
 
+//NUR FUER WINDOWS
+#include <direct.h>
+//FUER LINUX
+//#include <unistd.h>
+
+
 #define INPUT_SIZE_MAX 256		//falls spaeter laengere Inputs bearbeitet werden sollen
 
 void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
@@ -170,7 +176,7 @@ void History(int Sichern, int Parameterzahl, int AusgabeWunsch)		//History(0,0,0
 	}
 
 	struct Node *Hilfszeiger = Anfang;
-	int Zaehler = 0;										//Ist verantwortlich fuer die ID in der History
+	unsigned int Zaehler = 0;								//Ist verantwortlich fuer die ID in der History
 	FILE *HistoryFile = fopen(".hhush.histfile", "wb");		//oeffnet (und erstellt gegebenenfalls) die History-Datei
 	if ((HistoryFile == NULL) && (Sichern == 1))
 	{
@@ -188,8 +194,10 @@ void History(int Sichern, int Parameterzahl, int AusgabeWunsch)		//History(0,0,0
 	{
 		if (Sichern == 0)
 		{
-			char ZwischenSpeicher[INPUT_SIZE_MAX + 10];		//falls Befehle maximaler Leange ausgegeben werden muessen, die Auch noch 9-stellige Numerierungen aufweisen
-			sprintf(ZwischenSpeicher, "%i %s", Zaehler, Hilfszeiger);
+			char ZwischenSpeicher[INPUT_SIZE_MAX + 11];	
+			/* falls Befehle maximaler Leange ausgegeben werden muessen, die Auch noch 10-stellige Numerierungen aufweisen 
+			(der Wertebereich von unsigned Integer unter 32-Bit Linux ist 4.294.967.295 , also 10-stellig.)*/
+			sprintf(ZwischenSpeicher, "%d %s", Zaehler, Hilfszeiger);
 			AppendPipeBuffer(ZwischenSpeicher);
 		}
 		else if (Sichern == 1)
@@ -753,25 +761,30 @@ int main(void)
 	/*******************************************
 	*******Hier beginnt das Input-Modul ******
 	********************************************/
-	char Input[INPUT_SIZE_MAX];	//Wird zur Speicherung der Nutzereingabe verwendet
-
-
-
-
+	char Input[INPUT_SIZE_MAX];	//wird zur Speicherung der Nutzereingabe verwendet
+	char *PathName;				//wird zur Speicherung des Pathnamen verwendet
+	
 	while (ExitVariable)
 	{
+		PathName = _getcwd(NULL, 0);	//holt sich den Pathname
+		if (PathName == NULL)
+		{
+			FehlerFunktion("Pathname Speicherreservierung funktionierte nicht");
+		}
+		printf("%s $ ", PathName);		//gibt den Prompt aus
+
 		fgets(Input, sizeof(Input), stdin);
 		if (InputStufe_0(Input))	//falls nur Leerzeichen/Tabs eingegeben wurden, wird neu angefangen
 		{
 			continue;
 		}
+		NeuesElement(Input);		//speichert die Eingabe in der History
 		InputStufe_1(Input);
 		if (InputStufe_1Fehler == 1)
 		{
 			//Fehlerbehandlung
 			continue;
 		}
-		NeuesElement(Input);		//speichert die Eingabe in der History; wird erst hier gemacht, da erst in Stufe 1 auf laenge ueberprueft wird
 		InputStufe_2();				//ersetzt alle Tabs in der Eingabe durch Leerzeichen
 		InputStufe_3();				//loescht alle Leerzeichen, die keine Eingabe trennen
 
@@ -812,6 +825,8 @@ int main(void)
 			printf(GlobalPipeBufferPointer);
 			WipePipeBuffer();
 		}
+		
+		free(PathName);		//gibt den Speicherplatz der fuer den String fuer den Pathname reserviert wurde wider frei
 	}
 
 	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
