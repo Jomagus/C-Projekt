@@ -18,6 +18,71 @@ void FehlerFunktion(char *Fehler)		//Wird zur Ausgabe von Fehlern verwendet
 
 int PipeFehler = 0;		//wird auf 1 gesetzt, bei ungueltigem Kommando; auf 2 bei ungueltigen Argumenten
 
+/*************************************************
+*******Hier beginnt der Pipe-Buffer *************
+*************************************************/
+
+/* Der Pipe-Buffer ist ein Char-Array beliebiger groeﬂe, fuer das dynamisch Speicher reserviert wird.
+Die beliebig groﬂe Ausgabe eines Unterprogramms kann so zwischengespeichert werden, falls Piping
+verwendet wird. */
+
+char *GlobalPipeBufferPointer = NULL;
+
+void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zugewiesenen Speicherbereich und gibt einen Pointer darauf zurueck
+{
+	if (GlobalPipeBufferPointer != NULL)
+	{
+		FehlerFunktion("PipeBuffer ist noch nicht leer");
+		return;
+	}
+	int InputLeange = strlen(Input);			//schaut wie lang der Input ist
+	char *ReturnPointer = malloc((InputLeange + 1)* sizeof(char));		//reserviert Speicher fuer die Eingabe + '\0'
+	if (ReturnPointer == NULL)
+	{
+		FehlerFunktion("Es konnte kein Speicher fuer den PipeBuffer zugewiesen werden");
+		return;
+	}
+	memcpy(ReturnPointer, Input, (InputLeange + 1)* sizeof(char));
+	GlobalPipeBufferPointer = ReturnPointer;
+	return;
+}
+
+void WipePipeBuffer(void)						//loescht den PipeBufferPointer
+{
+	if (GlobalPipeBufferPointer == NULL)
+	{
+		FehlerFunktion("PipeBuffer ist schon leer");
+		return;
+	}
+	free(GlobalPipeBufferPointer);
+	GlobalPipeBufferPointer = NULL;
+	return;
+}
+
+/* Im laufe der Entwicklung dieses Programms wurde mir klar, dass es einfacher ist, eine Funktion zu haben, in die man Zeilenweise schreiben kann, als in jedem Unterprogramm
+daf¸r zu sorgen, dass die komplette Ausgabe in einem einzelnen String steht, der dann ‹bergeben wird. (In der Echo Funktion klappte dies noch, aber f¸r history und ls war es dann 
+doch einfacher, diese Funktion zu entwickeln.*/
+
+void AppendPipeBuffer(char *Input)
+{
+	int InputLeange = strlen(Input);							//schaut wie lang der Input ist
+	if (GlobalPipeBufferPointer == NULL)						//wenn der PipeBuffer noch leer ist, verwenden wir einfach die WritePipeBuffer-Funktion
+	{
+		WritePipeBuffer(Input);
+		return;
+	}
+
+	int AlteBufferLeange = strlen(GlobalPipeBufferPointer);		//schaut wie viel schon im PipeBuffer steht
+	char *ZwischenPointer = realloc(GlobalPipeBufferPointer, (AlteBufferLeange + InputLeange + 1)*sizeof(char));	//wir vergroeﬂern den reservierten Speicher f¸r den neuen Input (+1*'\0')
+	if (ZwischenPointer == NULL)			//falls die Speicherplatzvergroeﬂerung nicht funktioniert; man beachte, dass GlobalPipeBufferPointer in dem Fall nicht veraendert wird
+	{
+		FehlerFunktion("Es konnte kein weiterer Speicher fuer den PipeBuffer zugewiesen werden");
+		return;
+	}
+	GlobalPipeBufferPointer = ZwischenPointer;					//da realloc den Speicherblock verschieben kann
+	strcat(GlobalPipeBufferPointer, Input);						//wir h‰ngen den Input hinten an den bestehenden Speicherbereich
+	return;
+}
 
 /*******************************************
  *******Hier beginnt das History-Modul******
@@ -123,7 +188,9 @@ void History(int Sichern, int Parameterzahl, int AusgabeWunsch)		//History(0,0,0
 	{
 		if (Sichern == 0)
 		{
-			printf("%i %s", Zaehler, Hilfszeiger);
+			char ZwischenSpeicher[256];
+			sprintf(ZwischenSpeicher, "%i %s", Zaehler, Hilfszeiger);
+			AppendPipeBuffer(ZwischenSpeicher);
 		}
 		else if (Sichern == 1)
 		{
@@ -482,47 +549,6 @@ void BefehlsListeReset(void)		//wir loeschen die komplette Befehlsliste und gebe
 }
 
 /*************************************************
-*******Hier beginnt der Pipe-Buffer *************
-*************************************************/
-
-/* Der Pipe-Buffer ist ein Char-Array beliebiger groeﬂe, fuer das dynamisch Speicher reserviert wird.
-Die beliebig groﬂe Ausgabe eines Unterprogramms kann so zwischengespeichert werden, falls Piping
-verwendet wird. */
-
-char *GlobalPipeBufferPointer = NULL;
-
-void WritePipeBuffer(char *Input)				//schreibt den Input in einen dynamisch zugewiesenen Speicherbereich und gibt einen Pointer darauf zurueck
-{
-	if (GlobalPipeBufferPointer != NULL)
-	{
-		FehlerFunktion("PipeBuffer ist noch nicht leer");
-		return;
-	}
-	int InputLeange = strlen(Input);			//schaut wie lang der Input ist
-	char *ReturnPointer = malloc((InputLeange + 1)* sizeof(char));		//reserviert Speicher fuer die Eingabe + '\0'
-	if (ReturnPointer == NULL)
-	{
-		FehlerFunktion("Es konnte kein Speicher fuer den PipeBuffer zugewiesen werden");
-		return;
-	}
-	memcpy(ReturnPointer, Input, (InputLeange + 1)* sizeof(char));
-	GlobalPipeBufferPointer = ReturnPointer;
-	return;
-}
-
-void WipePipeBuffer(void)						//loescht den PipeBufferPointer
-{
-	if (GlobalPipeBufferPointer == NULL)
-	{
-		FehlerFunktion("PipeBuffer ist schon leer");
-		return;
-	}
-	free(GlobalPipeBufferPointer);
-	GlobalPipeBufferPointer = NULL;
-	return;
-}
-
-/*************************************************
 *******Hier beginnt das Exit-Programm ************
 *************************************************/
 
@@ -580,7 +606,7 @@ void EchoProgramm(void)
 		}
 
 		char ZwischenSpeicher[INPUT_SIZE_MAX];		//da eine Eingabe maximal 256 Zeichen lang ist, wird die Ausgabe des Echo Befehls nie laenger als dies sein (eig. noch -5 Zeichen f¸r "echo ")
-		int ZaehlerEins = 0;						//wird zum Zeahlen den Zwischenspeichers verwendet
+		unsigned int ZaehlerEins = 0;				//wird zum Zeahlen den Zwischenspeichers verwendet (unsigned, da strlen auch unsigned int verwendet)
 		int ZaehlerZwei = 0;						//wird auch dazu verwendet
 		while (BefehlAnzahl > 0)
 		{
@@ -595,8 +621,8 @@ void EchoProgramm(void)
 			ZwischenSpeicher[ZaehlerZwei] = ' ';
 			ZaehlerZwei++;
 		}
-		ZwischenSpeicher[ZaehlerZwei] = '\n';
-		ZwischenSpeicher[ZaehlerZwei + 1] = '\0';
+		ZwischenSpeicher[ZaehlerZwei] = '\n';	//wir (er)setzen nach dem letzen Argument (das Leerzeichen durch) Newline
+		ZwischenSpeicher[ZaehlerZwei + 1] = '\0';		//und schlieﬂen dann den String ab
 		WritePipeBuffer(ZwischenSpeicher);
 		return;
 	}
@@ -627,7 +653,7 @@ void HistoryProgramm(void)
 			return;
 		}
 		int n = atoi(NeuesArgument.Befehl);			//wandelt den String in eine Ganzzahl um
-		if (n == 0)									//atoi gibt 0 zurueck, wenn die umwandlung fehlschlaegt
+		if (n == 0)									//atoi gibt 0 zurueck, wenn die umwandlung fehlschlaegt (desweiteren macht die Ausgabe von 0 History Elementen keinen Sinn)
 		{
 			PipeFehler = 2;
 			return;
