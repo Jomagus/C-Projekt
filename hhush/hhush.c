@@ -7,6 +7,7 @@ kompilieren in Visual Studio (sonst wuerde das kompilieren gar nicht erst funkti
 #include <stdlib.h>		//z.B. fuer NULL, malloc() und free()
 #include <string.h>		//fuer memcpy
 #include <stdarg.h>		//fuer variable Parameteranzahl
+#include <time.h>		//fuer das date-Programm
 
 #define INPUT_SIZE_MAX 256		//falls spaeter laengere Inputs bearbeitet werden sollen
 
@@ -528,7 +529,7 @@ int ExitVariable = 1;		//wird auf 0 gesetzt, wenn das Programm verlassen werden 
 
 void ExitProgramm(void)
 {
-	if (BefehlAnzahl == 0)	//darf nur ohne Argumente verwendet werden
+	if (BefehlAnzahl == 0 && GlobalPipeBufferPointer == NULL)	//darf nur ohne Argumente verwendet werden
 	{
 		ExitVariable = 0;
 		return;
@@ -540,9 +541,25 @@ void ExitProgramm(void)
 	}
 }
 
+/*************************************************
+*******Hier beginnt das Date-Programm ************
+*************************************************/
 
-
-
+void DateProgramm(void)
+{
+	if (BefehlAnzahl == 0 && GlobalPipeBufferPointer == NULL)	//darf nur ohne Argumente verwendet werden
+	{
+		time_t Zeit;						//wir legen eine Zeit-Stuktur an
+		time(&Zeit);						//wir speichern dort die aktuelle Zeit
+		WritePipeBuffer(ctime(&Zeit));		//die Funktion ctime(time_t *time) gibt die Zeit als String aus, der (ganz Zufällig) wie im Beispiel der Aufgabe formatiert ist
+		return;
+	}
+	else
+	{
+		PipeFehler = 2;
+		return;
+	}
+}
 
 
 
@@ -589,7 +606,7 @@ void FunktionsAufrufer()
 	switch (BefehlInterpreter())
 	{
 	case 0: ExitProgramm(); break;
-	case 1: /* DATE */; break;
+	case 1: DateProgramm(); break;
 	case 2: /* History */; break;
 	case 3: /* echo */; break;
 	case 4: /* ls */; break;
