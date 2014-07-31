@@ -188,7 +188,7 @@ void History(int Sichern, int Parameterzahl, int AusgabeWunsch)		//History(0,0,0
 	{
 		if (Sichern == 0)
 		{
-			char ZwischenSpeicher[256];
+			char ZwischenSpeicher[INPUT_SIZE_MAX + 10];		//falls Befehle maximaler Leange ausgegeben werden muessen, die Auch noch 9-stellige Numerierungen aufweisen
 			sprintf(ZwischenSpeicher, "%i %s", Zaehler, Hilfszeiger);
 			AppendPipeBuffer(ZwischenSpeicher);
 		}
@@ -812,11 +812,6 @@ int main(void)
 			printf(GlobalPipeBufferPointer);
 			WipePipeBuffer();
 		}
-
-
-		//Bis hier steht "fertiger" Code
-		//Platz fuer Debugcode
-
 	}
 
 	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
