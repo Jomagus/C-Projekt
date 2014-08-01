@@ -66,7 +66,7 @@ void WipePipeBuffer(void)						//loescht den PipeBufferPointer
 }
 
 /* Im laufe der Entwicklung dieses Programms wurde mir klar, dass es einfacher ist, eine Funktion zu haben, in die man Zeilenweise schreiben kann, als in jedem Unterprogramm
-dafür zu sorgen, dass die komplette Ausgabe in einem einzelnen String steht, der dann Übergeben wird. (In der Echo Funktion klappte dies noch, aber für history und ls war es dann 
+dafuer zu sorgen, dass die komplette Ausgabe in einem einzelnen String steht, der dann uebergeben wird. (In der Echo Funktion klappte dies noch, aber fuer history und ls war es dann 
 doch einfacher, diese Funktion zu entwickeln.*/
 
 void AppendPipeBuffer(char *Input)
@@ -79,14 +79,14 @@ void AppendPipeBuffer(char *Input)
 	}
 
 	int AlteBufferLeange = strlen(GlobalPipeBufferPointer);		//schaut wie viel schon im PipeBuffer steht
-	char *ZwischenPointer = realloc(GlobalPipeBufferPointer, (AlteBufferLeange + InputLeange + 1)*sizeof(char));	//wir vergroeßern den reservierten Speicher für den neuen Input (+1*'\0')
+	char *ZwischenPointer = realloc(GlobalPipeBufferPointer, (AlteBufferLeange + InputLeange + 1)*sizeof(char));	//wir vergroeßern den reservierten Speicher fuer den neuen Input (+1*'\0')
 	if (ZwischenPointer == NULL)			//falls die Speicherplatzvergroeßerung nicht funktioniert; man beachte, dass GlobalPipeBufferPointer in dem Fall nicht veraendert wird
 	{
 		FehlerFunktion("Es konnte kein weiterer Speicher fuer den PipeBuffer zugewiesen werden");
 		return;
 	}
 	GlobalPipeBufferPointer = ZwischenPointer;					//da realloc den Speicherblock verschieben kann
-	strcat(GlobalPipeBufferPointer, Input);						//wir hängen den Input hinten an den bestehenden Speicherbereich
+	strcat(GlobalPipeBufferPointer, Input);						//wir haengen den Input hinten an den bestehenden Speicherbereich
 	return;
 }
 
@@ -586,7 +586,7 @@ void DateProgramm(void)
 	{
 		time_t Zeit;						//wir legen eine Zeit-Stuktur an
 		time(&Zeit);						//wir speichern dort die aktuelle Zeit
-		WritePipeBuffer(ctime(&Zeit));		//die Funktion ctime(time_t *time) gibt die Zeit als String aus, der (ganz Zufällig) wie im Beispiel der Aufgabe formatiert ist
+		WritePipeBuffer(ctime(&Zeit));		//die Funktion ctime(time_t *time) gibt die Zeit als String aus, der (ganz Zufaellig) wie im Beispiel der Aufgabe formatiert ist
 		return;
 	}
 	else
@@ -600,7 +600,7 @@ void DateProgramm(void)
 *******Hier beginnt das Echo-Programm ************
 *************************************************/
 
-/* Die Aufgabenstellung fordert nicht, dass man die Ausgabe beliebiger Programme als eingabe für echo implementieren soll.
+/* Die Aufgabenstellung fordert nicht, dass man die Ausgabe beliebiger Programme als eingabe fuer echo implementieren soll.
 Deshalb habe ich es auch nicht getan, und wenn ein gepipetes Programm eine Ausgabe macht, wird ein darauffolgender echo-Befehl
 immer fehlschlagen. */
 
@@ -613,7 +613,7 @@ void EchoProgramm(void)
 			WritePipeBuffer("\n\0");
 		}
 
-		char ZwischenSpeicher[INPUT_SIZE_MAX];		//da eine Eingabe maximal 256 Zeichen lang ist, wird die Ausgabe des Echo Befehls nie laenger als dies sein (eig. noch -5 Zeichen für "echo ")
+		char ZwischenSpeicher[INPUT_SIZE_MAX];		//da eine Eingabe maximal 256 Zeichen lang ist, wird die Ausgabe des Echo Befehls nie laenger als dies sein (eig. noch -5 Zeichen fuer "echo ")
 		unsigned int ZaehlerEins = 0;				//wird zum Zeahlen den Zwischenspeichers verwendet (unsigned, da strlen auch unsigned int verwendet)
 		int ZaehlerZwei = 0;						//wird auch dazu verwendet
 		while (BefehlAnzahl > 0)
@@ -655,7 +655,7 @@ void HistoryProgramm(void)
 	else if (BefehlAnzahl == 1)
 	{
 		struct BefehlsListe NeuesArgument = GetBefehl();
-		if (strcmp(NeuesArgument.Befehl, "-c") == 0)		//schaut ob die history gelöscht werden sollte
+		if (strcmp(NeuesArgument.Befehl, "-c") == 0)		//schaut ob die history geloescht werden sollte
 		{
 			ListeLoeschen();
 			return;
