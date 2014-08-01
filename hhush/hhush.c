@@ -8,11 +8,11 @@ kompilieren in Visual Studio (sonst wuerde das kompilieren gar nicht erst funkti
 #include <string.h>		//fuer memcpy
 #include <time.h>		//fuer das date-Programm
 
-//NUR FUER WINDOWS
+#ifdef WIN32
 #include <direct.h>
-//FUER LINUX
-//#include <unistd.h>
-
+#else
+#include <unistd.h>
+#endif
 
 #define INPUT_SIZE_MAX 256		//falls spaeter laengere Inputs bearbeitet werden sollen
 
@@ -197,7 +197,7 @@ void History(int Sichern, int Parameterzahl, int AusgabeWunsch)		//History(0,0,0
 			char ZwischenSpeicher[INPUT_SIZE_MAX + 11];	
 			/* falls Befehle maximaler Leange ausgegeben werden muessen, die Auch noch 10-stellige Numerierungen aufweisen 
 			(der Wertebereich von unsigned Integer unter 32-Bit Linux ist 4.294.967.295 , also 10-stellig.)*/
-			sprintf(ZwischenSpeicher, "%d %s", Zaehler, Hilfszeiger);
+			sprintf(ZwischenSpeicher, "%d %s", Zaehler, Hilfszeiger->Eingabe);
 			AppendPipeBuffer(ZwischenSpeicher);
 		}
 		else if (Sichern == 1)
@@ -647,7 +647,7 @@ void EchoProgramm(void)
 
 void HistoryProgramm(void)
 {
-	if (BefehlAnzahl > 1)	//es darf maximal 1 Arument uebergeben werden
+	if (BefehlAnzahl > 1)	//es darf maximal 1 Argument uebergeben werden
 	{
 		PipeFehler = 2;
 		return;
@@ -766,7 +766,12 @@ int main(void)
 	
 	while (ExitVariable)
 	{
+		#ifdef WIN32
 		PathName = _getcwd(NULL, 0);	//holt sich den Pathname
+		#else
+		PathName = getcwd(NULL, 0);	//holt sich den Pathname
+		#endif
+		
 		if (PathName == NULL)
 		{
 			FehlerFunktion("Pathname Speicherreservierung funktionierte nicht");
@@ -822,7 +827,7 @@ int main(void)
 		
 		if (GlobalPipeBufferPointer != NULL)	//gibt den PipeBuffer aus, nachdem alle Kommandos durchlaufen worden sind
 		{
-			printf(GlobalPipeBufferPointer);
+			printf("%s", GlobalPipeBufferPointer);
 			WipePipeBuffer();
 		}
 		
