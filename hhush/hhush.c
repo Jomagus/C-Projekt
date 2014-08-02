@@ -8,7 +8,7 @@ kompilieren in Visual Studio (sonst wuerde das kompilieren gar nicht erst funkti
 #include <string.h>		//fuer memcpy
 #include <time.h>		//fuer das date-Programm
 
-#ifdef WIN32
+#ifdef WIN32			//fuegt den Header fuer die Verzeichnisfunktionen ein
 #include <direct.h>
 #else
 #include <unistd.h>
@@ -676,11 +676,32 @@ void HistoryProgramm(void)
 	}
 }
 
+/*************************************************
+*******Hier beginnt das LS-Programm **************
+*************************************************/
 
+void LSProgramm(void)
+{
+	return;
+}
 
+/*************************************************
+*******Hier beginnt das CD-Programm **************
+*************************************************/
 
+void CDProgramm(void)
+{
+	return;
+}
 
+/*************************************************
+*******Hier beginnt das Grep-Programm ************
+*************************************************/
 
+void GrepProgramm(void)
+{
+	return;
+}
 
 /*************************************************
 *******Hier beginnt der Befehl-Interpreter ******
@@ -728,9 +749,9 @@ void FunktionsAufrufer()
 	case 1: DateProgramm(); break;
 	case 2: HistoryProgramm(); break;
 	case 3: EchoProgramm(); break;
-	case 4: /* ls */; break;
-	case 5: /* cd */; break;
-	case 6: /* grep */; break;
+	case 4: LSProgramm(); break;
+	case 5: CDProgramm(); break;
+	case 6: GrepProgramm(); break;
 	default: PipeFehler = 1; break;
 	}
 }
