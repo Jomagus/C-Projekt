@@ -698,6 +698,14 @@ void CDProgramm(void)
 *******Hier beginnt das Grep-Programm ************
 *************************************************/
 
+/* TODO: Dynamisch Speicherplatz für ein Zeile reservieren.
+falls gepipet, Unterprogramm kopiert "neuste" Zeile des pipebuffer darein, ansonsten
+wird ja Zeilenweise aus einer Datei gelesen.
+
+Ebenso muss ein Extra GrepPipeBuffer implementiert werden, falls grep x y | grep z gemacht wird, da grep z
+auf dem Pipe Buffer agiert. NEIN BESSER: Kopiere kompletten Pipebuffer und lösche ihn dann, so kann
+grep z direkt wieder in den Pipebuffer schreiben (wie auch grep x y, also keine extra behandlung erforderlich).*/
+
 void GrepProgramm(void)
 {
 	return;
