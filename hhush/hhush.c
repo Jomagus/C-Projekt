@@ -611,6 +611,7 @@ void EchoProgramm(void)
 		if (BefehlAnzahl == 0)				//falls keine Argumente uebergeben worden sind
 		{
 			WritePipeBuffer("\n\0");
+			return;
 		}
 
 		char ZwischenSpeicher[INPUT_SIZE_MAX];		//da eine Eingabe maximal 256 Zeichen lang ist, wird die Ausgabe des Echo Befehls nie laenger als dies sein (eig. noch -5 Zeichen fuer "echo ")
@@ -698,16 +699,166 @@ void CDProgramm(void)
 *******Hier beginnt das Grep-Programm ************
 *************************************************/
 
-/* TODO: Dynamisch Speicherplatz für ein Zeile reservieren.
-falls gepipet, Unterprogramm kopiert "neuste" Zeile des pipebuffer darein, ansonsten
-wird ja Zeilenweise aus einer Datei gelesen.
+/* Die folgende Funktion "klaut" den PipeBuffer vom GlobalPipeBufferPointer.
+So können die bereits bekannten PipeBuffer-Funktionen verwendet werden, während 
+der fürs Piping eig. im PipeBuffer noch  zwischengespeicherte Inhalt für das Grep
+Programm verwendet wird.
+Wir wollen jede gefundene Zeile (mit Übereinstimmung) sofort in den PipeBuffer
+schreiben, dass geht nur, wenn dort nicht noch die vorherige Ausgabe gespeichert ist.
+Mit dieser Funktion wird dies möglich. */
 
-Ebenso muss ein Extra GrepPipeBuffer implementiert werden, falls grep x y | grep z gemacht wird, da grep z
-auf dem Pipe Buffer agiert. NEIN BESSER: Kopiere kompletten Pipebuffer und lösche ihn dann, so kann
-grep z direkt wieder in den Pipebuffer schreiben (wie auch grep x y, also keine extra behandlung erforderlich).*/
+char *PipeBufferGrepCopy(void)
+{
+	char *ReturnPointer = GlobalPipeBufferPointer;
+	GlobalPipeBufferPointer = NULL;
+	return ReturnPointer;
+}
+
+/* Es folgt quasi derselbe Code wie des PipeBuffers,
+da wir immer die aktuell zu betrachtende Zeile in einen Buffer kopieren,
+um auf ihr dann nach den Grep Argumenten zu suchen. Der Code des PipeBuffers
+ist darauf ausgelegt, einen beliebigen String dynamisch zu speichern, genau
+das, was wir hier tun wollen. */
+
+char *GrepBufferPointer = NULL;
+
+void WriteGrepBuffer(char *Input)				//schreibt den Input in einen dynamisch zugewiesenen Speicherbereich und gibt einen Pointer darauf zurueck
+{
+	if (GrepBufferPointer != NULL)
+	{
+		FehlerFunktion("GrepBuffer ist noch nicht leer");
+		return;
+	}
+	int InputLeange = strlen(Input);			//schaut wie lang der Input ist
+	char *ReturnPointer = malloc((InputLeange + 1)* sizeof(char));		//reserviert Speicher fuer die Eingabe + '\0'
+	if (ReturnPointer == NULL)
+	{
+		FehlerFunktion("Es konnte kein Speicher fuer den GrepBuffer zugewiesen werden");
+		return;
+	}
+	memcpy(ReturnPointer, Input, (InputLeange + 1)* sizeof(char));
+	GrepBufferPointer = ReturnPointer;
+	return;
+}
+
+void WipeGrepBuffer(void)						//loescht den GrepBufferPointer
+{
+	if (GrepBufferPointer == NULL)
+	{
+		FehlerFunktion("GrepBuffer ist schon leer");
+		return;
+	}
+	free(GrepBufferPointer);
+	GrepBufferPointer = NULL;
+	return;
+}
+
+int PipeCopyNewLineInGrepBuffer(char *PipeAusgabe)	//kopiert die neuste Ausgabezeile in den GrepBuffer; wenn am Ende angekommen =0
+{
+	if (PipeAusgabe[0] == '\0')		//schaut ob die Eingabe leer ist
+	{
+		return 0;
+	}
+	if (PipeAusgabe[0] == '\n')		//behandelt den Sonderfall einer Freizeile
+	{
+		int NeuZeilenZaehler;
+		int EingabeLaenge = strlen(PipeAusgabe);
+		for (NeuZeilenZaehler = 0; NeuZeilenZaehler < EingabeLaenge - 1; NeuZeilenZaehler++)
+		{
+			PipeAusgabe[NeuZeilenZaehler] = PipeAusgabe[NeuZeilenZaehler + 1];
+		}
+		PipeAusgabe[EingabeLaenge-1] = '\0';
+		return 1;
+	}
+
+	unsigned int ErsteNewline;
+	for (ErsteNewline= 0; PipeAusgabe[ErsteNewline] != '\n'; ErsteNewline++)
+	{
+		//zeahlt an welcher Stelle das erste Leerzeichen ist
+		if (PipeAusgabe[ErsteNewline] == '\0')
+		{
+			break;
+		}
+	}
+
+	char *NeusteZeile = malloc((ErsteNewline + 2) * sizeof(char));		//reserviert Speicher für die neuste Zeile + '\0' (+2 da ErsteNewline bei 0 beginnt)
+	if (NeusteZeile == NULL)
+	{
+		FehlerFunktion("konnte keinen Speicher in PipeCopyGrep reservieren");
+		return 0;
+	}
+
+	memcpy(NeusteZeile, PipeAusgabe, (ErsteNewline+1)*sizeof(char));	//kopiert erste Zeile in NeusteZeile
+	NeusteZeile[ErsteNewline+1] = '\0';
+
+	//nun ueberschreiben wir die neuste Zeile mit der Zeile dannach
+
+	int Zeahler;
+	int InputLaenge = strlen(PipeAusgabe);
+
+	for (Zeahler = 0; Zeahler < InputLaenge-ErsteNewline ; Zeahler++)
+	{
+		PipeAusgabe[Zeahler] = PipeAusgabe[Zeahler + ErsteNewline];
+	}
+	PipeAusgabe[Zeahler - 1] = '\0';
+
+	WriteGrepBuffer(NeusteZeile);	//schreibe die NeusteZeile in den GrepBuffer
+	free(NeusteZeile);				//gebe den Speicherplatz fuer die NeusteZeile wieder frei
+	return 1;
+}
+
+void SucheInZeile(char *Suchstring)	//sucht nach Suchstring auf dem GrepBuffer
+{
+	if (GrepBufferPointer == NULL)	//falls (beim letzen durchlauf immer) nichts zum durchsuchen da ist
+	{
+		return;
+	}
+	if (strstr(GrepBufferPointer, Suchstring) != NULL)
+	{
+		WritePipeBuffer(GrepBufferPointer);
+	}
+	WipeGrepBuffer();
+	return;
+}
 
 void GrepProgramm(void)
 {
+	if (BefehlAnzahl == 0  || BefehlAnzahl > 2)	//schaut ob Syntax eingehalten wurde
+	{
+		PipeFehler = 2;
+		return;
+	}
+
+	char *SuchString = GetBefehl().Befehl;		//holt sich den Suchstring
+
+	if (GlobalPipeBufferPointer != NULL)		//falls gepipet wurde
+	{
+		if (BefehlAnzahl != 0)					//schaut ob Syntax verletzt wurde (es darf keine Datei angegeben werden)
+		{
+			PipeFehler = 2;
+			return;
+		}
+		char *PipeAusgabenPointer = PipeBufferGrepCopy();	//hier liegt die Ausgabe des voherigen Programms
+
+		while (PipeCopyNewLineInGrepBuffer(PipeAusgabenPointer))
+		{
+			SucheInZeile(SuchString);
+		}
+		free(PipeAusgabenPointer);
+	}
+	else										//falls nicht gepipet wurde
+	{
+		char *DateiString = GetBefehl().Befehl;
+	}
+
+
+	//CODE fuer DateiSuche
+
+
+	if (GlobalPipeBufferPointer == NULL)	//falls die Suche nichts gefunden hat
+	{
+		WritePipeBuffer("\n\0");
+	}
 	return;
 }
 
