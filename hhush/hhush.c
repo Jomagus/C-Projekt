@@ -868,40 +868,41 @@ void GrepProgramm(void)
 		letzteres geschrieben, weil ich weiterhin unter Visual Studio programmieren wollte. Fuer meine Implementierung habe
 		ich Ideen aus http://www.computerbase.de/forum/showthread.php?t=931844 verwendet. Meine Implementierung ist eine leicht angepasste
 		Version von "c0mp4ct"s Codebeispiel vom 31.07.2011, 12:22. Die Anpassungen von mir lesen Zeile fuer Zeile aus, statt nur die erste Zeile.
+		Desweiteren stammen alle Kommentare von mir.
 		Theoretisch kˆnnte ich auch die komplette Datei in den Hauptspeicher kopieren und dann so handhaben, wie oben wenn gepipet wurde,
 		d.h. ich koennte auch einfach PipeCopyNewLineInGrepBuffer(char *Pointer) usw. verwenden. Dies wollte ich aber nicht tun, da beliebig
 		groﬂe Dateien verarbeitet werden koennen sollen, aber der Addressierbare Hauptspeicher begrenzt ist. (Und wer moechte schon fuer eine
 		Datei 3GB Speicher reservieren) */
 
-		int Schleifenabbruch = 1;
-		while (Schleifenabbruch)
+		int Schleifenabbruch = 1;		//wird fuer den Abbruch bei EOF verwendet
+		while (Schleifenabbruch)		//diese Schleife tut die Datei Zeilenweise einlesen
 		{
-			unsigned int BlockLaenge = 128;
-			unsigned int AktuelleGroeﬂe = 0;
-			int Zeichen = EOF;
-			unsigned int Zaehler = 0;
-			char *StringSpeicher = malloc(BlockLaenge * sizeof(char));
+			unsigned int BlockLaenge = 128;		//Blockgroeﬂe in denen zusaetzlicher Speicherplatz reserviert wird
+			unsigned int AktuelleGroeﬂe = 0;	//Wie groﬂ der aktuell reservierte Speicher ist
+			int Zeichen = EOF;					//Hier wird das aktuell eingelesene Zeichen zwischengespeichert
+			unsigned int Zaehler = 0;			//Zaehlt das Char-Array durch
+			char *StringSpeicher = malloc(BlockLaenge * sizeof(char));		//Wir reservieren einen Speicherblock
 
-			if (StringSpeicher == NULL)
+			if (StringSpeicher == NULL)			//Wir schauen ob wir den Speicherplatz ueberhaupt reservieren konnten
 			{
 				FehlerFunktion("Konnte keinen Speicher fuer das lesen aus Datei reservieren (A)");
 				break;
 			}
 
-			AktuelleGroeﬂe = BlockLaenge;
+			AktuelleGroeﬂe = BlockLaenge;		//Am Anfang haben wir Speicher fuer eine Blocklaenge reserviert
 
-			while ((Zeichen = fgetc(FilePointer)) != '\n')
+			while ((Zeichen = fgetc(FilePointer)) != '\n')	//Wir lesen die Datei Zeichen fuer Zeichen, bis eine Newline kommt
 			{
-				if (Zeichen == EOF)
+				if (Zeichen == EOF)							//Falls wir am Ende der Datei sind, brechen wir beide Schleifen ab
 				{
 					Schleifenabbruch = 0;
 					break;
 				}
 
 
-				StringSpeicher[Zaehler] = (char)Zeichen;
+				StringSpeicher[Zaehler] = (char)Zeichen;	//Wir kopieren das eingelesene Zeichen in unseren Speicherbereich
 				Zaehler++;
-				if (Zaehler == AktuelleGroeﬂe)
+				if (Zaehler == AktuelleGroeﬂe)		//Falls wir am Ende unseres Speicherblocks sind, vergroeﬂern wir ihn
 				{
 					AktuelleGroeﬂe = Zaehler + BlockLaenge;
 					if ((StringSpeicher = realloc(StringSpeicher, AktuelleGroeﬂe * sizeof(char))) == NULL)
@@ -912,23 +913,14 @@ void GrepProgramm(void)
 					}
 				}
 			}
-			StringSpeicher[Zaehler] = '\n';
-			StringSpeicher[Zaehler + 1] = '\0';
-			WriteGrepBuffer(StringSpeicher);
-			free(StringSpeicher);
+			StringSpeicher[Zaehler] = '\n';		//Wir fuegen eine Newline ein
+			StringSpeicher[Zaehler + 1] = '\0';	//und Terminieren dann den String noch (Beachte Zaehler+1 <= AktuelleGroeﬂe, daher ueberschreiben wir nicht die Grenzen)
+			WriteGrepBuffer(StringSpeicher);	//dannach schreiben wir diesen String in den Grep-Buffer
+			free(StringSpeicher);				//und geben den Speicherplatz wieder frei
 			StringSpeicher = NULL;
-			SucheInZeile(SuchString);
+			SucheInZeile(SuchString);			//dann fuehren wir unsere Suche aus
 		}
-
-
-
-
-
-
-
-		//TODO: Rest des teil - evtl. getline (nur GNU) verwenden
-		
-		fclose(FilePointer);
+		fclose(FilePointer);				//macht den Dateistream wieder zu
 	}
 
 	if (GlobalPipeBufferPointer == NULL)	//falls die Suche nichts gefunden hat
