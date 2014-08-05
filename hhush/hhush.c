@@ -774,7 +774,7 @@ int PipeCopyNewLineInGrepBuffer(char *PipeAusgabe)	//kopiert die neuste Ausgabez
 	unsigned int ErsteNewline;
 	for (ErsteNewline= 0; PipeAusgabe[ErsteNewline] != '\n'; ErsteNewline++)
 	{
-		//zeahlt an welcher Stelle das erste Leerzeichen ist
+		//zeahlt an welcher Stelle das erste Newline ist
 		if (PipeAusgabe[ErsteNewline] == '\0')
 		{
 			break;
@@ -793,14 +793,14 @@ int PipeCopyNewLineInGrepBuffer(char *PipeAusgabe)	//kopiert die neuste Ausgabez
 
 	//nun ueberschreiben wir die neuste Zeile mit der Zeile dannach
 
-	int Zeahler;
-	int InputLaenge = strlen(PipeAusgabe);
+	unsigned int Zeahler;
+	unsigned int InputLaenge = strlen(PipeAusgabe);
 
-	for (Zeahler = 0; Zeahler < InputLaenge-ErsteNewline ; Zeahler++)
+	for (Zeahler = 0; Zeahler <= InputLaenge-ErsteNewline ; Zeahler++)
 	{
 		PipeAusgabe[Zeahler] = PipeAusgabe[Zeahler + ErsteNewline];
 	}
-	PipeAusgabe[Zeahler - 1] = '\0';
+	PipeAusgabe[Zeahler] = '\0';
 
 	WriteGrepBuffer(NeusteZeile);	//schreibe die NeusteZeile in den GrepBuffer
 	free(NeusteZeile);				//gebe den Speicherplatz fuer die NeusteZeile wieder frei
@@ -809,13 +809,13 @@ int PipeCopyNewLineInGrepBuffer(char *PipeAusgabe)	//kopiert die neuste Ausgabez
 
 void SucheInZeile(char *Suchstring)	//sucht nach Suchstring auf dem GrepBuffer
 {
-	if (GrepBufferPointer == NULL)	//falls (beim letzen durchlauf immer) nichts zum durchsuchen da ist
+	if (GrepBufferPointer == NULL)	//falls nichts zum durchsuchen da ist (tritt bei jeder Freizeile auf)
 	{
 		return;
 	}
 	if (strstr(GrepBufferPointer, Suchstring) != NULL)
 	{
-		WritePipeBuffer(GrepBufferPointer);
+		AppendPipeBuffer(GrepBufferPointer);
 	}
 	WipeGrepBuffer();
 	return;
@@ -848,12 +848,88 @@ void GrepProgramm(void)
 	}
 	else										//falls nicht gepipet wurde
 	{
+		if (BefehlAnzahl == 0)					//falls keine Datei angegeben wurde
+		{
+			PipeFehler = 2;
+			return;
+		}
 		char *DateiString = GetBefehl().Befehl;
+		FILE *FilePointer = fopen(DateiString, "r");	//oeffnet die Datei im lese modus
+		if (FilePointer == NULL)						//falls die Datei nich geoeffnet werden konnte
+		{
+			WritePipeBuffer("no such file or directory\n");
+			return;
+		}
+
+		/* Hier stand ich vor der Wahl: Entweder verwende ich:
+		ssize_t getline (char **lineptr, size_t *n, FILE *stream)
+		eine nicht ANSI-C, allerdings unter gcc verfügbare Funktion, welche ich aber nicht gut unter Windows Debuggen koennte,
+		oder ich benutze ein aufwaendigeres System, dass dynamisch Speicherplatz fuer die Zeile reserviert. Ich habe mich fuer
+		letzteres geschrieben, weil ich weiterhin unter Visual Studio programmieren wollte. Fuer meine Implementierung habe
+		ich Ideen aus http://www.computerbase.de/forum/showthread.php?t=931844 verwendet. Meine Implementierung ist eine leicht angepasste
+		Version von "c0mp4ct"s Codebeispiel vom 31.07.2011, 12:22. Die Anpassungen von mir lesen Zeile fuer Zeile aus, statt nur die erste Zeile.
+		Theoretisch könnte ich auch die komplette Datei in den Hauptspeicher kopieren und dann so handhaben, wie oben wenn gepipet wurde,
+		d.h. ich koennte auch einfach PipeCopyNewLineInGrepBuffer(char *Pointer) usw. verwenden. Dies wollte ich aber nicht tun, da beliebig
+		große Dateien verarbeitet werden koennen sollen, aber der Addressierbare Hauptspeicher begrenzt ist. (Und wer moechte schon fuer eine
+		Datei 3GB Speicher reservieren) */
+
+		int Schleifenabbruch = 1;
+		while (Schleifenabbruch)
+		{
+			unsigned int BlockLaenge = 128;
+			unsigned int AktuelleGroeße = 0;
+			int Zeichen = EOF;
+			unsigned int Zaehler = 0;
+			char *StringSpeicher = malloc(BlockLaenge * sizeof(char));
+
+			if (StringSpeicher == NULL)
+			{
+				FehlerFunktion("Konnte keinen Speicher fuer das lesen aus Datei reservieren (A)");
+				break;
+			}
+
+			AktuelleGroeße = BlockLaenge;
+
+			while ((Zeichen = fgetc(FilePointer)) != '\n')
+			{
+				if (Zeichen == EOF)
+				{
+					Schleifenabbruch = 0;
+					break;
+				}
+
+
+				StringSpeicher[Zaehler] = (char)Zeichen;
+				Zaehler++;
+				if (Zaehler == AktuelleGroeße)
+				{
+					AktuelleGroeße = Zaehler + BlockLaenge;
+					if ((StringSpeicher = realloc(StringSpeicher, AktuelleGroeße * sizeof(char))) == NULL)
+					{
+						FehlerFunktion("Konnte keinen Speicher fuer das lesen aus Datei reservieren (B)");
+						fclose(FilePointer);
+						return;
+					}
+				}
+			}
+			StringSpeicher[Zaehler] = '\n';
+			StringSpeicher[Zaehler + 1] = '\0';
+			WriteGrepBuffer(StringSpeicher);
+			free(StringSpeicher);
+			StringSpeicher = NULL;
+			SucheInZeile(SuchString);
+		}
+
+
+
+
+
+
+
+		//TODO: Rest des teil - evtl. getline (nur GNU) verwenden
+		
+		fclose(FilePointer);
 	}
-
-
-	//CODE fuer DateiSuche
-
 
 	if (GlobalPipeBufferPointer == NULL)	//falls die Suche nichts gefunden hat
 	{
