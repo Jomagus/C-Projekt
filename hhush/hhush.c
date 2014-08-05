@@ -700,12 +700,12 @@ void CDProgramm(void)
 *************************************************/
 
 /* Die folgende Funktion "klaut" den PipeBuffer vom GlobalPipeBufferPointer.
-So können die bereits bekannten PipeBuffer-Funktionen verwendet werden, während 
-der fürs Piping eig. im PipeBuffer noch  zwischengespeicherte Inhalt für das Grep
+So koennen die bereits bekannten PipeBuffer-Funktionen verwendet werden, waehrend 
+der fuers Piping eig. im PipeBuffer noch  zwischengespeicherte Inhalt fuer das Grep
 Programm verwendet wird.
-Wir wollen jede gefundene Zeile (mit Übereinstimmung) sofort in den PipeBuffer
+Wir wollen jede gefundene Zeile (mit uebereinstimmung) sofort in den PipeBuffer
 schreiben, dass geht nur, wenn dort nicht noch die vorherige Ausgabe gespeichert ist.
-Mit dieser Funktion wird dies möglich. */
+Mit dieser Funktion wird dies moeglich. */
 
 char *PipeBufferGrepCopy(void)
 {
@@ -781,7 +781,7 @@ int PipeCopyNewLineInGrepBuffer(char *PipeAusgabe)	//kopiert die neuste Ausgabez
 		}
 	}
 
-	char *NeusteZeile = malloc((ErsteNewline + 2) * sizeof(char));		//reserviert Speicher für die neuste Zeile + '\0' (+2 da ErsteNewline bei 0 beginnt)
+	char *NeusteZeile = malloc((ErsteNewline + 2) * sizeof(char));		//reserviert Speicher fuer die neuste Zeile + '\0' (+2 da ErsteNewline bei 0 beginnt)
 	if (NeusteZeile == NULL)
 	{
 		FehlerFunktion("konnte keinen Speicher in PipeCopyGrep reservieren");
