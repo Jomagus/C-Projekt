@@ -28,8 +28,8 @@ int PipeFehler = 0;		//wird auf 1 gesetzt, bei ungueltigem Kommando; auf 2 bei u
 *******Hier beginnt der Pipe-Buffer *************
 *************************************************/
 
-/* Der Pipe-Buffer ist ein Char-Array beliebiger groeﬂe, fuer das dynamisch Speicher reserviert wird.
-Die beliebig groﬂe Ausgabe eines Unterprogramms kann so zwischengespeichert werden, falls Piping
+/* Der Pipe-Buffer ist ein Char-Array beliebiger groesse, fuer das dynamisch Speicher reserviert wird.
+Die beliebig grosse Ausgabe eines Unterprogramms kann so zwischengespeichert werden, falls Piping
 verwendet wird. */
 
 char *GlobalPipeBufferPointer = NULL;
@@ -79,8 +79,8 @@ void AppendPipeBuffer(char *Input)
 	}
 
 	int AlteBufferLeange = strlen(GlobalPipeBufferPointer);		//schaut wie viel schon im PipeBuffer steht
-	char *ZwischenPointer = realloc(GlobalPipeBufferPointer, (AlteBufferLeange + InputLeange + 1)*sizeof(char));	//wir vergroeﬂern den reservierten Speicher fuer den neuen Input (+1*'\0')
-	if (ZwischenPointer == NULL)			//falls die Speicherplatzvergroeﬂerung nicht funktioniert; man beachte, dass GlobalPipeBufferPointer in dem Fall nicht veraendert wird
+	char *ZwischenPointer = realloc(GlobalPipeBufferPointer, (AlteBufferLeange + InputLeange + 1)*sizeof(char));	//wir vergroessern den reservierten Speicher fuer den neuen Input (+1*'\0')
+	if (ZwischenPointer == NULL)			//falls die Speicherplatzvergroesserung nicht funktioniert; man beachte, dass GlobalPipeBufferPointer in dem Fall nicht veraendert wird
 	{
 		FehlerFunktion("Es konnte kein weiterer Speicher fuer den PipeBuffer zugewiesen werden");
 		return;
@@ -631,7 +631,7 @@ void EchoProgramm(void)
 			ZaehlerZwei++;
 		}
 		ZwischenSpeicher[ZaehlerZwei] = '\n';	//wir (er)setzen nach dem letzen Argument (das Leerzeichen durch) Newline
-		ZwischenSpeicher[ZaehlerZwei + 1] = '\0';		//und schlieﬂen dann den String ab
+		ZwischenSpeicher[ZaehlerZwei + 1] = '\0';		//und schliessen dann den String ab
 		WritePipeBuffer(ZwischenSpeicher);
 		return;
 	}
@@ -871,16 +871,16 @@ void GrepProgramm(void)
 		Desweiteren stammen alle Kommentare von mir.
 		Theoretisch kˆnnte ich auch die komplette Datei in den Hauptspeicher kopieren und dann so handhaben, wie oben wenn gepipet wurde,
 		d.h. ich koennte auch einfach PipeCopyNewLineInGrepBuffer(char *Pointer) usw. verwenden. Dies wollte ich aber nicht tun, da beliebig
-		groﬂe Dateien verarbeitet werden koennen sollen, aber der Addressierbare Hauptspeicher begrenzt ist. (Und wer moechte schon fuer eine
+		grosse Dateien verarbeitet werden koennen sollen, aber der Addressierbare Hauptspeicher begrenzt ist. (Und wer moechte schon fuer eine
 		Datei 3GB Speicher reservieren) */
 
 		int Schleifenabbruch = 1;		//wird fuer den Abbruch bei EOF verwendet
 		while (Schleifenabbruch)		//diese Schleife tut die Datei Zeilenweise einlesen
 		{
-			unsigned int BlockLaenge = 128;		//Blockgroeﬂe in denen zusaetzlicher Speicherplatz reserviert wird
-			unsigned int AktuelleGroeﬂe = 0;	//Wie groﬂ der aktuell reservierte Speicher ist
-			int Zeichen = EOF;					//Hier wird das aktuell eingelesene Zeichen zwischengespeichert
+			unsigned int BlockLaenge = 128;		//Blockgroesse in denen zusaetzlicher Speicherplatz reserviert wird
+			unsigned int AktuelleGroesse = 0;	//Wie gross der aktuell reservierte Speicher ist
 			unsigned int Zaehler = 0;			//Zaehlt das Char-Array durch
+			int Zeichen = EOF;					//Hier wird das aktuell eingelesene Zeichen zwischengespeichert
 			char *StringSpeicher = malloc(BlockLaenge * sizeof(char));		//Wir reservieren einen Speicherblock
 
 			if (StringSpeicher == NULL)			//Wir schauen ob wir den Speicherplatz ueberhaupt reservieren konnten
@@ -889,7 +889,7 @@ void GrepProgramm(void)
 				break;
 			}
 
-			AktuelleGroeﬂe = BlockLaenge;		//Am Anfang haben wir Speicher fuer eine Blocklaenge reserviert
+			AktuelleGroesse = BlockLaenge;		//Am Anfang haben wir Speicher fuer eine Blocklaenge reserviert
 
 			while ((Zeichen = fgetc(FilePointer)) != '\n')	//Wir lesen die Datei Zeichen fuer Zeichen, bis eine Newline kommt
 			{
@@ -902,10 +902,10 @@ void GrepProgramm(void)
 
 				StringSpeicher[Zaehler] = (char)Zeichen;	//Wir kopieren das eingelesene Zeichen in unseren Speicherbereich
 				Zaehler++;
-				if (Zaehler == AktuelleGroeﬂe)		//Falls wir am Ende unseres Speicherblocks sind, vergroeﬂern wir ihn
+				if (Zaehler == AktuelleGroesse)		//Falls wir am Ende unseres Speicherblocks sind, vergroessern wir ihn
 				{
-					AktuelleGroeﬂe = Zaehler + BlockLaenge;
-					if ((StringSpeicher = realloc(StringSpeicher, AktuelleGroeﬂe * sizeof(char))) == NULL)
+					AktuelleGroesse = Zaehler + BlockLaenge;
+					if ((StringSpeicher = realloc(StringSpeicher, AktuelleGroesse * sizeof(char))) == NULL)
 					{
 						FehlerFunktion("Konnte keinen Speicher fuer das lesen aus Datei reservieren (B)");
 						fclose(FilePointer);
@@ -914,10 +914,10 @@ void GrepProgramm(void)
 				}
 			}
 			StringSpeicher[Zaehler] = '\n';		//Wir fuegen eine Newline ein
-			StringSpeicher[Zaehler + 1] = '\0';	//und Terminieren dann den String noch (Beachte Zaehler+1 <= AktuelleGroeﬂe, daher ueberschreiben wir nicht die Grenzen)
+			StringSpeicher[Zaehler + 1] = '\0';	//und Terminieren dann den String noch (Beachte Zaehler+1 <= AktuelleGroesse, daher ueberschreiben wir nicht die Grenzen)
 			WriteGrepBuffer(StringSpeicher);	//dannach schreiben wir diesen String in den Grep-Buffer
 			free(StringSpeicher);				//und geben den Speicherplatz wieder frei
-			StringSpeicher = NULL;
+			StringSpeicher = NULL;				//nur zur Sicherheit
 			SucheInZeile(SuchString);			//dann fuehren wir unsere Suche aus
 		}
 		fclose(FilePointer);				//macht den Dateistream wieder zu
@@ -1023,8 +1023,13 @@ int main(void)
 		if (PathName == NULL)
 		{
 			FehlerFunktion("Pathname Speicherreservierung funktionierte nicht");
+			printf("Unbekannt $ ");		//gibt den Prompt aus
 		}
-		printf("%s $ ", PathName);		//gibt den Prompt aus
+		else
+		{
+			printf("%s $ ", PathName);		//gibt den Prompt aus
+		}
+		
 
 		fgets(Input, sizeof(Input), stdin);
 		if (InputStufe_0(Input))	//falls nur Leerzeichen/Tabs eingegeben wurden, wird neu angefangen
@@ -1035,7 +1040,7 @@ int main(void)
 		InputStufe_1(Input);
 		if (InputStufe_1Fehler == 1)
 		{
-			//Fehlerbehandlung
+			FehlerFunktion("Fehler in der Input Stufe 1");
 			continue;
 		}
 		InputStufe_2();				//ersetzt alle Tabs in der Eingabe durch Leerzeichen
@@ -1059,6 +1064,10 @@ int main(void)
 				{
 					WipePipeBuffer();
 				}
+				if (GrepBufferPointer != NULL)				//falls nicht leer, wird der GrepBuffer geloescht
+				{
+					WipeGrepBuffer();
+				}
 				if (PipeFehler == 1)
 				{
 					ExitVariable = 1;						//Bsp.: "exit | daate" wuerde immernoch exit ausfuehren, wenn diese Line nicht waere
@@ -1079,7 +1088,7 @@ int main(void)
 			WipePipeBuffer();
 		}
 		
-		free(PathName);		//gibt den Speicherplatz der fuer den String fuer den Pathname reserviert wurde wider frei
+		free(PathName);		//gibt den Speicherplatz der fuer den String des Pathnames reserviert wurde wider frei
 	}
 
 	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
