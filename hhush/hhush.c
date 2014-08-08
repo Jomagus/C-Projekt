@@ -178,7 +178,7 @@ void History(int Sichern, int Parameterzahl, int AusgabeWunsch)		//History(0,0,0
 	}
 
 	struct Node *Hilfszeiger = Anfang;
-	unsigned int Zaehler = 0;								//Ist verantwortlich fuer die ID in der History
+	unsigned int Zaehler = ListenAnzahl - n;					//Ist verantwortlich fuer die ID in der History
 	FILE *HistoryFile = fopen(".hhush.histfile", "wb");		//oeffnet (und erstellt gegebenenfalls) die History-Datei
 	if ((HistoryFile == NULL) && (Sichern == 1))
 	{
@@ -632,8 +632,8 @@ void EchoProgramm(void)
 			ZwischenSpeicher[ZaehlerZwei] = ' ';
 			ZaehlerZwei++;
 		}
-		ZwischenSpeicher[ZaehlerZwei] = '\n';	//wir (er)setzen nach dem letzen Argument (das Leerzeichen durch) Newline
-		ZwischenSpeicher[ZaehlerZwei + 1] = '\0';		//und schliessen dann den String ab
+		ZwischenSpeicher[ZaehlerZwei - 1] = '\n';	//wir (er)setzen nach dem letzen Argument (das Leerzeichen durch) Newline
+		ZwischenSpeicher[ZaehlerZwei] = '\0';		//und schliessen dann den String ab
 		WritePipeBuffer(ZwischenSpeicher);
 		return;
 	}
@@ -1102,6 +1102,7 @@ int main(void)
 			printf("%s $ ", PathName);		//gibt den Prompt aus
 		}
 		
+		free(PathName);		//gibt den Speicherplatz der fuer den String des Pathnames reserviert wurde wider frei
 
 		fgets(Input, sizeof(Input), stdin);
 		if (InputStufe_0(Input))	//falls nur Leerzeichen/Tabs eingegeben wurden, wird neu angefangen
@@ -1159,8 +1160,6 @@ int main(void)
 			printf("%s", GlobalPipeBufferPointer);
 			WipePipeBuffer();
 		}
-		
-		free(PathName);		//gibt den Speicherplatz der fuer den String des Pathnames reserviert wurde wider frei
 	}
 
 	History(1, 1, 1000);			//Sichert die neusten 1000 Elemente der History in der Datei
