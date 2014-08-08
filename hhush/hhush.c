@@ -481,7 +481,7 @@ void NeuerBefehl(char Input[INPUT_SIZE_MAX])
 	return;
 }
 
-void InputStufe_4(char Input[INPUT_SIZE_MAX])
+void InputStufe_4(char *Input)
 {
 	int InputLaenge;		//Speichert wie lang die Nutzereingabe ist, indem es angiebt Input[InputLaenge]='\n'
 
@@ -714,7 +714,12 @@ void LSProgramm(void)
 	struct dirent *VerzeichnissZeiger;	//Zeiger der Element fuer Element das Verzeichniss ausliest
 	while ((VerzeichnissZeiger = readdir(Verzeichniss)) != NULL)	//wir gehen alle Elemente im Verzeichniss durch
 	{
-		int DateiNamenLaenge = VerzeichnissZeiger->d_namlen;	//holt die Laenge des auszugebenden Dateinamens
+		int DateiNamenLaenge; //holt die Laenge des auszugebenden Dateinamens
+		#ifdef WIN32
+		DateiNamenLaenge = VerzeichnissZeiger->d_namlen;	
+		#else
+		DateiNamenLaenge = VerzeichnissZeiger->d_reclen;
+		#endif
 		char *Zwischenspeicher = malloc((DateiNamenLaenge + 2)*sizeof(char));	//holt sich Speicher fuer Dateinamen+'\n'+'\0'
 		if (Zwischenspeicher == NULL)
 		{
@@ -1075,7 +1080,8 @@ int main(void)
 	/*******************************************
 	*******Hier beginnt das Input-Modul ******
 	********************************************/
-	char Input[INPUT_SIZE_MAX];	//wird zur Speicherung der Nutzereingabe verwendet
+	static char Input[INPUT_SIZE_MAX];		//wird zur Speicherung der Nutzereingabe verwendet
+	//Anmerkung: DIESES VERDAMMTE KLEINE "STATIC" HAT MIR SO VERDAMMT VIEL AERGER BEREITET! ICH VERFLUCHE ES!
 	char *PathName;				//wird zur Speicherung des Pathnamen verwendet
 	
 	while (ExitVariable)
