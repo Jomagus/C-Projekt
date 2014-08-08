@@ -7,8 +7,10 @@ kompilieren in Visual Studio (sonst wuerde das kompilieren gar nicht erst funkti
 #include <stdlib.h>		//z.B. fuer NULL, malloc() und free()
 #include <string.h>		//fuer memcpy
 #include <time.h>		//fuer das date-Programm
+#include <sys/types.h>	//fuer Verzeichnisfunktionen
+#include <dirent.h>		//ebenso fuer Verzeichnisfunktionen
 
-#ifdef WIN32			//fuegt den Header fuer die Verzeichnisfunktionen ein
+#ifdef WIN32			//fuegt den Header fuer weitere Verzeichnisfunktionen ein
 #include <direct.h>
 #else
 #include <unistd.h>
@@ -683,6 +685,51 @@ void HistoryProgramm(void)
 
 void LSProgramm(void)
 {
+	if (GlobalPipeBufferPointer != NULL || BefehlAnzahl != 0)	//schaut ob die Aufrugparameter in Ordnung sind
+	{
+		PipeFehler = 2;
+		return;
+	}
+	char *PathName;				//wird zur Speicherung des Pathnamen verwendet
+	#ifdef WIN32
+	PathName = _getcwd(NULL, 0);	//holt sich den Pathname
+	#else
+	PathName = getcwd(NULL, 0);	//holt sich den Pathname
+	#endif
+	if (PathName == NULL)
+	{
+		FehlerFunktion("Konnte keinen Speicher fuer das Verzeichniss im LS-Programm reservieren");
+		return;
+	}
+
+	DIR *Verzeichniss;			//Verzeichnisspointer fuer das auslesen des aktuellen Verzeichnisses
+	Verzeichniss = opendir(PathName);	//oeffnen des aktuellen Verzeichnisses
+	free(PathName);				//giebt den Speicher fuer den Verzeichnissnamen wieder frei
+	if (Verzeichniss == NULL)
+	{
+		FehlerFunktion("Fehler beim oeffnen des Verzeichnisses");
+		return;
+	}
+
+	struct dirent *VerzeichnissZeiger;	//Zeiger der Element fuer Element das Verzeichniss ausliest
+	while ((VerzeichnissZeiger = readdir(Verzeichniss)) != NULL)	//wir gehen alle Elemente im Verzeichniss durch
+	{
+		int DateiNamenLaenge = VerzeichnissZeiger->d_namlen;	//holt die Laenge des auszugebenden Dateinamens
+		char *Zwischenspeicher = malloc((DateiNamenLaenge + 2)*sizeof(char));	//holt sich Speicher fuer Dateinamen+'\n'+'\0'
+		if (Zwischenspeicher == NULL)
+		{
+			FehlerFunktion("Konnte keinen Zwischenspeicher fuer den Dateinamen reservieren");
+			break;
+		}
+
+		sprintf(Zwischenspeicher, "%s\n", VerzeichnissZeiger->d_name);	//wir haengen eine Newline an den Dateinamen
+		if (Zwischenspeicher[0] != '.')									//und schauen dann, dass die Datei nicht mit einem Punkt beginnt
+		{
+			AppendPipeBuffer(Zwischenspeicher);							//bevor wir ihn an die "Ausgabe" weiterreichen
+		}
+		free(Zwischenspeicher);											//und dann unseren Zwischenspeicher wieder freigeben
+	}
+	closedir(Verzeichniss);			//schliesst das Verzeichniss wieder
 	return;
 }
 
@@ -692,6 +739,25 @@ void LSProgramm(void)
 
 void CDProgramm(void)
 {
+	if (GlobalPipeBufferPointer != NULL || BefehlAnzahl != 1)	//schaut ob die Aufrugparameter in Ordnung sind
+	{
+		PipeFehler = 2;
+		return;
+	}
+	char Kommando[INPUT_SIZE_MAX];
+	memcpy(Kommando, GetBefehl().Befehl, INPUT_SIZE_MAX*sizeof(char)); //holt sich das uebergebene Argument in "Kommando"
+
+	int Erfolg;		//speichert ob das Verzeichniss existiert
+	#ifdef WIN32	//damit das Programm auch unter Windows funktioniert
+	Erfolg = _chdir(Kommando);
+	#else
+	Erfolg = chdir(Kommando);
+	#endif
+	
+	if (Erfolg == -1)	//gibt bei einem Fehler in chdir diese Ausgabe aus
+	{
+		WritePipeBuffer("no such file or directory\n");
+	}
 	return;
 }
 
