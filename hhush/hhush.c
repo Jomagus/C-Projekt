@@ -421,8 +421,8 @@ void InputStufe_3(void)				//iteriert ueber dem Stufe-1-Stack und minimiert die 
 						break;
 					}
 					Hilfspointer->InputText[HilfsZaehler] = Hilfspointer->InputText[HilfsZaehler + 1];		//verschiebe alles "eins nach vorne"
-					Zaehler--;
 				}
+				Zaehler--;
 			}
 		}
 
@@ -992,11 +992,6 @@ void GrepProgramm(void)
 			SucheInZeile(SuchString);			//dann fuehren wir unsere Suche aus
 		}
 		fclose(FilePointer);				//macht den Dateistream wieder zu
-	}
-
-	if (GlobalPipeBufferPointer == NULL)	//falls die Suche nichts gefunden hat
-	{
-		WritePipeBuffer("\n\0");
 	}
 	return;
 }
