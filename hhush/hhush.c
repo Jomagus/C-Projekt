@@ -498,7 +498,7 @@ void InputStufe_4(char *Input)
 	}
 	else
 	{
-		char EinzelInput[INPUT_SIZE_MAX];		//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
+		static char EinzelInput[INPUT_SIZE_MAX];//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
 		int RestInputZaehler = 0;				//Fuer die Numerierung des RestInputs
 		int HilfsZaehler;
 
