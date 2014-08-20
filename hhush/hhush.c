@@ -484,13 +484,13 @@ void InputStufe_4(char *Input)
 	int Zaehler;								//Zaehlt an welcher Stelle im String ein Leerzeichen ist, von hinten an
 	for (Zaehler = InputLaenge; Input[Zaehler] != ' '; Zaehler--)
 	{
-		if (Zaehler < 0)
+		if (Zaehler == 0)
 		{
 			break;
 		}
 	}
 
-	if (Zaehler < 0)							//Wenn kein (weiteres) Leerzeichen gefunden worden ist
+	if (Zaehler == 0)							//Wenn kein (weiteres) Leerzeichen gefunden worden ist
 	{
 		Input[InputLaenge] = '\0';
 		NeuerBefehl(Input);
@@ -498,7 +498,7 @@ void InputStufe_4(char *Input)
 	}
 	else
 	{
-		static char EinzelInput[INPUT_SIZE_MAX];//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
+		char EinzelInput[INPUT_SIZE_MAX];		//Hier wird das Kommando hinter dem letzen Pipe Symbol ('|') gespeichert
 		int RestInputZaehler = 0;				//Fuer die Numerierung des RestInputs
 		int HilfsZaehler;
 
